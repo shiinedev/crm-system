@@ -3,6 +3,9 @@ import { Geist, Geist_Mono, Lora } from "next/font/google"
 import "../styles/globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { cn } from "@/lib/utils";
+import {NuqsAdapter} from "nuqs/adapters/next"
+import { TRPCReactProvider } from "@/lib/trpc/client";
+import { Toaster } from "sonner";
 
 const lora = Lora({subsets:['latin'],variable:'--font-serif'});
 
@@ -28,7 +31,14 @@ export default function RootLayout({
       className={cn("antialiased", fontSans.variable, fontMono.variable, "font-serif", lora.variable)}
     >
       <body>
-        <ThemeProvider>{children}</ThemeProvider>
+        <NuqsAdapter>
+          <TRPCReactProvider>
+        <ThemeProvider>
+          {children}
+           <Toaster richColors closeButton position="top-right" />
+          </ThemeProvider>
+        </TRPCReactProvider>
+        </NuqsAdapter>
       </body>
     </html>
   )
