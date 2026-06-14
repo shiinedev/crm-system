@@ -22,6 +22,7 @@ import type { Company } from "@/db/schema"
 import { useQuery } from '@tanstack/react-query';
 import { CompaniesTableSkeleton } from "./companies-skelton"
 
+
 const LIFECYCLE_COLORS: Record<string, "default" | "info" | "warning" | "success" | "destructive" | "outline"> = {
   lead: "outline",
   prospect: "info",
