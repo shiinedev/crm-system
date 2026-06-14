@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dialog"
 
 import {
-    Field, FieldContent, FieldDescription, FieldError, FieldGroup, FieldLabel
+    Field, FieldContent, FieldError, FieldGroup, FieldLabel
 } from "@/components/ui/field"
 import {
     Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
