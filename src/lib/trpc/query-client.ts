@@ -22,3 +22,5 @@ export function makeQueryClient() {
         },
     });
 }
+
+export const queryClient = makeQueryClient();

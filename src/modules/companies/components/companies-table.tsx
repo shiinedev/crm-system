@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { trpc } from "@/lib/trpc/client"
+import { useTRPC } from "@/lib/trpc/client"
 import { MoreHorizontal, Plus, Search, Building2, Globe, Pencil, Trash2, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -14,11 +14,13 @@ import {
   Select, SelectContent, SelectItem,
   SelectTrigger, SelectValue,
 } from "@/components/ui/select"
-import { CompanyFormDialog } from "./company-form-dialog"
+import { CompanyFormDialog } from "./companies-form-dialog"
 import { useDeleteCompany } from "../hooks/use-company-mutations"
 import { useFilters } from "@/hooks/use-filters"
 import { stripProtocol } from "@/utils/strip-protocol"
 import type { Company } from "@/db/schema"
+import { useQuery } from '@tanstack/react-query';
+import { CompaniesTableSkeleton } from "./companies-skelton"
 
 const LIFECYCLE_COLORS: Record<string, "default" | "info" | "warning" | "success" | "destructive" | "outline"> = {
   lead: "outline",
@@ -32,14 +34,18 @@ export function CompaniesTable() {
   const [formOpen, setFormOpen] = useState(false)
   const [editCompany, setEditCompany] = useState<Company | undefined>()
 
+  const trpc = useTRPC()
+
   const {
     q, setFilter,
     companyLifecycle, companyIndustry, companySize,
     hasActiveFilters, resetFilters,
   } = useFilters()
 
-  const { data: companies = [], isLoading } = trpc.companies.list.useQuery()
-  const { execute: deleteCompany } = useDeleteCompany()
+  const { data: companies = [], isLoading } = useQuery(trpc.companies.list.queryOptions())
+  const { execute: deleteCompany } = useDeleteCompany();
+
+  console.log("Companies data:", companies);
 
   // Client-side filtering driven by URL params
   const filtered = companies.filter((c) => {
@@ -127,11 +133,10 @@ export function CompaniesTable() {
       </div>
 
       {/* Table */}
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-auto ">
         {isLoading ? (
-          <div className="flex items-center justify-center h-40 text-sm text-muted-foreground">
-            Loading...
-          </div>
+          <CompaniesTableSkeleton />
+
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-40 gap-2">
             <Building2 className="h-8 w-8 text-muted-foreground/40" />

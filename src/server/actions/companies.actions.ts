@@ -11,6 +11,7 @@ import { createNotification } from "@/db/queries/notifications.queries";
 import { createCompanySchema, updateCompanySchema } from "@/lib/validations/companies";
 
 
+
 export const createCompanyAction = orgActionClient
     .inputSchema(createCompanySchema)
     .action(async ({ parsedInput, ctx }) => {
@@ -32,6 +33,7 @@ export const createCompanyAction = orgActionClient
                 metadata: JSON.stringify({ companyId: company.id }),
             });
         }
+
 
         return { company };
     });
@@ -60,7 +62,6 @@ export const updateCompanyAction = orgActionClient
                 metadata: JSON.stringify({ companyId: company.id }),
             });
         }
-
         return { company };
     });
 
