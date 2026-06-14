@@ -7,7 +7,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-// import { NotificationsBell } from "@/modules/notifications/components/notifications-bell"
+import { NotificationsBell } from "@/modules/notifications/components/Notification-bell"
 import { useSession, signOut, organization } from "@/server/auth/auth-client"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
@@ -75,7 +75,7 @@ export function Header() {
 
       {/* Right side */}
       <div className="flex items-center gap-1">
-        {/* <NotificationsBell /> */}
+        <NotificationsBell />
 
         {/* User menu */}
         <DropdownMenu>
