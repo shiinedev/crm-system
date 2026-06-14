@@ -96,7 +96,7 @@ export async function createTask(data: NewTask) {
 export async function updateTask(
     id: string,
     organizationId: string,
-    data: Partial<NewTask>
+    data: Partial<Omit<NewTask, "id" | "organizationId">>
 ) {
     const [task] = await db
         .update(tasks)

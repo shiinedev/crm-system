@@ -55,6 +55,7 @@ export const tasksRouter = createTRPCRouter({
             return createTask({
                 ...input,
                 organizationId: ctx.orgId,
+                reminderAt: input.reminderAt ? new Date(input.reminderAt) : undefined,
                 dueDate: input.dueDate ? new Date(input.dueDate) : undefined,
             });
         }),
@@ -73,6 +74,7 @@ export const tasksRouter = createTRPCRouter({
         .mutation(async ({ ctx, input }) => {
             const task = await updateTask(input.id, ctx.orgId, {
                 ...input.data,
+                reminderAt: input.data.reminderAt ? new Date(input.data.reminderAt) : undefined,
                 dueDate: input.data.dueDate ? new Date(input.data.dueDate) : undefined,
             });
             if (!task) throw new TRPCError({ code: "NOT_FOUND" });

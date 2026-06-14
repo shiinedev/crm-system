@@ -49,7 +49,7 @@ export async function createCompany(data: NewCompany) {
 export async function updateCompany(
     id: string,
     organizationId: string,
-    data: Partial<NewCompany>
+    data: Partial<Omit<NewCompany, "id" | "organizationId">>
 ) {
     const [company] = await db
         .update(companies)

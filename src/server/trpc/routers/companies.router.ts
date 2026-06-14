@@ -44,9 +44,9 @@ export const companiesRouter = createTRPCRouter({
         }),
 
     update: orgProcedure
-        .input(z.object({ id: z.string(), data: updateCompanySchema }))
+        .input(updateCompanySchema)
         .mutation(async ({ ctx, input }) => {
-            const company = await updateCompany(input.id, ctx.orgId, input.data);
+            const company = await updateCompany(input.id, ctx.orgId, input);
             if (!company) throw new TRPCError({ code: "NOT_FOUND" });
             return company;
         }),

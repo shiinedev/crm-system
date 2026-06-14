@@ -14,7 +14,7 @@ import {
     getDealStats,
     getDealsByOwner,
 } from "@/db/queries/deals.queries";
-import { createDealSchema, updateDealSchema } from "@/lib/validations/deals";
+import { changeDealStageSchema, createDealSchema, updateDealSchema } from "@/lib/validations/deals";
 
 
 
@@ -66,15 +66,15 @@ export const dealsRouter = createTRPCRouter({
         }),
 
     update: orgProcedure
-        .input(z.object({ id: z.string(), data: updateDealSchema }))
+        .input(updateDealSchema)
         .mutation(async ({ ctx, input }) => {
-            const deal = await updateDeal(input.id, ctx.orgId, input.data);
+            const deal = await updateDeal(input.id, ctx.orgId, input);
             if (!deal) throw new TRPCError({ code: "NOT_FOUND" });
             return deal;
         }),
 
     changeStage: orgProcedure
-        .input(z.object({ id: z.string(), stageId: z.string() }))
+        .input(changeDealStageSchema)
         .mutation(async ({ ctx, input }) => {
             const deal = await updateDealStage(input.id, ctx.orgId, input.stageId);
             if (!deal) throw new TRPCError({ code: "NOT_FOUND" });

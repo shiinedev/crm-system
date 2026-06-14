@@ -66,7 +66,7 @@ export async function createContact(data: NewContact) {
 export async function updateContact(
     id: string,
     organizationId: string,
-    data: Partial<NewContact>
+    data: Partial<Omit<NewContact, "id" | "organizationId">>
 ) {
     const [contact] = await db
         .update(contacts)
