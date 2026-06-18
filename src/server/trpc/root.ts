@@ -8,7 +8,8 @@ import { tasksRouter } from "./routers/tasks.router"
 import { analyticsRouter } from "./routers/analytics.router"
 import { notificationsRouter } from "./routers/notifications.router"
 import { documentsRouter } from "./routers/documents.router"
-import {aiRouter} from "./routers/ai.router"
+import { aiRouter } from "./routers/ai.router"
+import {automationRouter} from "./routers/automation.router"
 
 export const appRouter = createTRPCRouter({
     companies: companiesRouter,
@@ -20,7 +21,8 @@ export const appRouter = createTRPCRouter({
     analytics: analyticsRouter,
     notifications: notificationsRouter,
     documents: documentsRouter,
-    ai:aiRouter
+    ai: aiRouter,
+    automation:automationRouter
 })
 
 export type AppRouter = typeof appRouter
