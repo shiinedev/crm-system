@@ -21,6 +21,7 @@ export const priorityEnum = pgEnum("priority", [
   "urgent",
 ]);
 
+
 export const forecastCategoryEnum = pgEnum("forecast_category", [
   "pipeline",
   "best_case",
@@ -123,3 +124,5 @@ export type PipelineStage = typeof pipelineStages.$inferSelect;
 export type NewPipelineStage = typeof pipelineStages.$inferInsert;
 export type Deal = typeof deals.$inferSelect;
 export type NewDeal = typeof deals.$inferInsert;
+export type ForecastCategory = (typeof forecastCategoryEnum.enumValues)[number];
+export type Priority = (typeof priorityEnum.enumValues)[number]

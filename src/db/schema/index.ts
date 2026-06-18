@@ -3,7 +3,7 @@ export {
 } from "./auth.schema";
 export { type Company, type NewCompany, companies, leadSourceEnum, leadStatusEnum, lifecycleStageEnum, riskLevelEnum } from "./companies.schema";
 export { type Contact, type NewContact, contacts } from "./contacts.schema";
-export { type Deal, type NewDeal, deals, forecastCategoryEnum, pipelineStages, pipelines, priorityEnum, type NewPipeline, type NewPipelineStage, type Pipeline, type PipelineStage } from "./deals.schema";
+export { type Deal, type NewDeal, deals, forecastCategoryEnum, pipelineStages, pipelines, priorityEnum, type NewPipeline, type NewPipelineStage, type Pipeline, type PipelineStage, type ForecastCategory , type Priority } from "./deals.schema";
 export { type Activity, type NewActivity, activities, activityTypeEnum, } from "./activities.schema";
 export { type NewTask, type Task, taskStatusEnum, tasks, } from "./tasks.schema";
 export { type Document, type NewDocument, documents, } from "./documents.schema";
