@@ -7,7 +7,7 @@ import { env } from "@/lib/env"
 function getIndex() {
   if (!env.PINECONE_API_KEY) throw new Error("PINECONE_API_KEY not set")
   const pc = new Pinecone({ apiKey: env.PINECONE_API_KEY })
-  return pc.index(env.PINECONE_INDEX ?? "crm-docs")
+  return pc.index(env.PINECONE_INDEX ?? "crm-ai")
 }
 
 async function embedText(text: string): Promise<number[]> {

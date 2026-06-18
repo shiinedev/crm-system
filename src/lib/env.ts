@@ -7,7 +7,7 @@ export const env = createEnv({
     BETTER_AUTH_SECRET: z.string().min(32),
     BETTER_AUTH_URL: z.string().url(),
     PINECONE_API_KEY: z.string().min(1, "PINECONE_API_KEY is missing"),
-    PINECONE_INDEX :z.string(),
+    PINECONE_INDEX :z.string().default("crm-ai"),
     // UPSTASH_REDIS_REST_URL: z.string().url().optional(),
     // UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
     // GOOGLE_CLIENT_ID: z.string().optional(),
