@@ -18,7 +18,7 @@ const NAV_ITEMS = [
   { href: "/documents", label: "Documents", icon: FileText },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/automation", label: "Automation", icon: Zap },
-  { href: "/ai", label: "AI Assistant", icon: Bot },
+  { href: "/ai/chat", label: "AI Assistant", icon: Bot },
 ]
 
 const BOTTOM_ITEMS = [
