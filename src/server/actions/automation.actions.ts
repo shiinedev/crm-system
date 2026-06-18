@@ -6,13 +6,13 @@ import {
   updateWorkflow,
   toggleWorkflow,
   deleteWorkflow,
-} from "@/src/db/queries/automation.queries"
-import { deleteWorkflowSchema, updateWorkflowSchema, workflowSchema } from "@/lib/validations/automation"
+} from "@/db/queries/automation.queries"
+import { deleteWorkflowSchema, toggleWorkflowSchema, updateWorkflowSchema, workflowSchema } from "@/lib/validations/automation"
 
 
 
 export const createWorkflowAction = managerActionClient
-  .schema(workflowSchema)
+  .inputSchema(workflowSchema)
   .action(async ({ parsedInput, ctx }) => {
     const workflow = await createWorkflow({
       ...parsedInput,
@@ -23,7 +23,7 @@ export const createWorkflowAction = managerActionClient
   })
 
 export const updateWorkflowAction = managerActionClient
-  .schema(updateWorkflowSchema)
+  .inputSchema(updateWorkflowSchema)
   .action(async ({ parsedInput, ctx }) => {
     const { id, ...data } = parsedInput
     const workflow = await updateWorkflow(id, ctx.orgId, data)
@@ -32,7 +32,7 @@ export const updateWorkflowAction = managerActionClient
   })
 
 export const toggleWorkflowAction = managerActionClient
-  .schema(toggleWorkflowSchema)
+  .inputSchema(toggleWorkflowSchema)
   .action(async ({ parsedInput, ctx }) => {
     const workflow = await toggleWorkflow(parsedInput.id, ctx.orgId, parsedInput.isActive)
     if (!workflow) throw new ActionError("Workflow not found.")
@@ -40,7 +40,7 @@ export const toggleWorkflowAction = managerActionClient
   })
 
 export const deleteWorkflowAction = managerActionClient
-  .schema(deleteWorkflowSchema)
+  .inputSchema(deleteWorkflowSchema)
   .action(async ({ parsedInput, ctx }) => {
     await deleteWorkflow(parsedInput.id, ctx.orgId)
     return { success: true }

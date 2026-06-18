@@ -1,18 +1,17 @@
 "use server"
 
-import { z } from "zod"
 import { orgActionClient, ActionError } from "./safe-action"
 import {
   createDocument,
   updateDocument,
   softDeleteDocument,
-} from "@/src/db/queries/documents.queries"
-import { createActivity } from "@/src/db/queries/activities.queries"
-import { createNoteSchema, updateDocumentSchema } from "@/lib/validations/document"
+} from "@/db/queries/documents.queries"
+import { createActivity } from "@/db/queries/activities.queries"
+import { createNoteSchema, deleteDocumentSchema, updateDocumentSchema } from "@/lib/validations/document"
 
 
 export const createNoteAction = orgActionClient
-  .schema(createNoteSchema)
+  .inputSchema(createNoteSchema)
   .action(async ({ parsedInput, ctx }) => {
     const doc = await createDocument({
       ...parsedInput,
@@ -35,7 +34,7 @@ export const createNoteAction = orgActionClient
   })
 
 export const updateDocumentAction = orgActionClient
-  .schema(updateDocumentSchema)
+  .inputSchema(updateDocumentSchema)
   .action(async ({ parsedInput, ctx }) => {
     const { id, ...data } = parsedInput
     const doc = await updateDocument(id, ctx.orgId, data)
@@ -44,7 +43,7 @@ export const updateDocumentAction = orgActionClient
   })
 
 export const deleteDocumentAction = orgActionClient
-  .schema(deleteDocumentSchema)
+  .inputSchema(deleteDocumentSchema)
   .action(async ({ parsedInput, ctx }) => {
     const doc = await softDeleteDocument(parsedInput.id, ctx.orgId)
     if (!doc) throw new ActionError("Document not found.")
