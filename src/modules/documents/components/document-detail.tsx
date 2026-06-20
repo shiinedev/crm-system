@@ -10,21 +10,7 @@ import { useUpdateDocument, useDeleteDocument } from "../hooks/use-document-muta
 import { formatDate } from "@/utils/format-date"
 import type { Document } from "@/db/schema"
 import { useRouter } from "next/navigation"
-
-// Simple markdown renderer — bold, italic, headers, code, lists
-function renderMarkdown(content: string) {
-  return content
-    .replace(/^### (.+)$/gm, '<h3 class="text-base font-semibold mt-4 mb-1">$1</h3>')
-    .replace(/^## (.+)$/gm, '<h2 class="text-lg font-semibold mt-5 mb-1">$1</h2>')
-    .replace(/^# (.+)$/gm, '<h1 class="text-xl font-bold mt-6 mb-2">$1</h1>')
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.+?)\*/g, '<em>$1</em>')
-    .replace(/`(.+?)`/g, '<code class="bg-muted px-1 py-0.5 rounded text-sm font-mono">$1</code>')
-    .replace(/^- (.+)$/gm, '<li class="ml-4 list-disc">$1</li>')
-    .replace(/^(\d+)\. (.+)$/gm, '<li class="ml-4 list-decimal">$2</li>')
-    .replace(/\n\n/g, '</p><p class="mb-2">')
-    .replace(/^(?!<[h|l])(.+)$/gm, '<p class="mb-2">$1</p>')
-}
+import { Streamdown } from "streamdown"
 
 interface DocumentDetailClientProps {
   document: Document
@@ -128,8 +114,9 @@ export function DocumentDetailClient({ document }: DocumentDetailClientProps) {
           ) : (
             <div
               className="prose prose-sm max-w-none text-foreground"
-              dangerouslySetInnerHTML={{ __html: renderMarkdown(content) || '<p class="text-muted-foreground">Nothing to preview yet.</p>' }}
-            />
+              >
+                <Streamdown>{content ? content : '<p class="text-muted-foreground">Nothing to preview yet.</p>' }</Streamdown>
+            </div>
           )}
         </div>
       </div>
