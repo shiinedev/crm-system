@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import {NuqsAdapter} from "nuqs/adapters/next"
 import { TRPCReactProvider } from "@/lib/trpc/client";
 import { Toaster } from "sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 const lora = Lora({subsets:['latin'],variable:'--font-serif'});
 
@@ -33,8 +34,8 @@ export default function RootLayout({
       <body>
         <NuqsAdapter>
           <TRPCReactProvider>
-        <ThemeProvider>
-          {children}
+            <ThemeProvider>
+                <TooltipProvider>{children}</TooltipProvider>
            <Toaster richColors closeButton position="top-right" />
           </ThemeProvider>
         </TRPCReactProvider>
