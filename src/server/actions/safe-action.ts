@@ -5,6 +5,7 @@ import { auth } from "@/server/auth/auth";
 import { db } from "@/db";
 import { members } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
+import { hasRole, type OrgRole } from "@/lib/roles";
 
 export class ActionError extends Error {
     constructor(message: string) {
@@ -54,19 +55,17 @@ export const orgActionClient = authActionClient.use(async ({ next, ctx }) => {
     return next({ ctx: { ...ctx, orgId, member } });
 });
 
-// ── Manager-level client 
+// ── Manager-level client (delegates to lib/roles — single source of truth)
 export const managerActionClient = orgActionClient.use(async ({ next, ctx }) => {
-    const allowedRoles = ["owner", "admin", "manager"];
-    if (!allowedRoles.includes(ctx.member.role)) {
+    if (!hasRole(ctx.member.role as OrgRole, "manager")) {
         throw new ActionError("You need manager permissions to perform this action.");
     }
     return next({ ctx });
 });
 
-// ── Admin-level client 
+// ── Admin-level client
 export const adminActionClient = orgActionClient.use(async ({ next, ctx }) => {
-    const allowedRoles = ["owner", "admin"];
-    if (!allowedRoles.includes(ctx.member.role)) {
+    if (!hasRole(ctx.member.role as OrgRole, "admin")) {
         throw new ActionError("You need admin permissions to perform this action.");
     }
     return next({ ctx });

@@ -30,7 +30,6 @@ const filterConfig = {
 type FilterState = Awaited<ReturnType<typeof useQueryStates<typeof filterConfig>>>[0]
 type FilterSetters = Awaited<ReturnType<typeof useQueryStates<typeof filterConfig>>>[1]
 type FilterKey = keyof FilterState
-type FilterValue = FilterState[FilterKey]
 
 /**
  * Single hook for all URL-based filter/search state.
@@ -62,8 +61,9 @@ export function useFilters() {
         })
     }
 
-    // Reset page to 1 on any filter change
-    function setFilter(key: FilterKey, value: FilterValue) {
+    // Reset page to 1 on any filter change. Generic so the value type is tied
+    // to the key; `null` clears the param from the URL (nuqs semantics).
+    function setFilter<K extends FilterKey>(key: K, value: FilterState[K] | null) {
         void (setters as FilterSetters)({ [key]: value, page: 1 } as Partial<FilterState>)
     }
 

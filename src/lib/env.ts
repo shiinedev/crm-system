@@ -14,7 +14,7 @@ export const env = createEnv({
     // GOOGLE_CLIENT_SECRET: z.string().optional(),
     // GITHUB_CLIENT_ID: z.string().optional(),
     // GITHUB_CLIENT_SECRET: z.string().optional(),
-    OPENROUTER_API_KEY: z.string().min(1, "OPENROUTER_API_KEY is misiing")
+    OPENROUTER_API_KEY: z.string().min(1, "OPENROUTER_API_KEY is missing")
   },
   client: {
     NEXT_PUBLIC_APP_URL: z.string().url(),

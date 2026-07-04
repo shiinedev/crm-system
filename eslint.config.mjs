@@ -12,10 +12,20 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Vendored Vercel AI Elements — upstream-maintained, don't hold to app lint bar.
+    "src/components/ai-elements/**",
   ]),
   {
     rules: {
       "@typescript-eslint/no-empty-object-type": "error",
+    },
+  },
+  {
+    // Generated shadcn/ui components — stock patterns trip the new
+    // react-hooks compiler rules; keep visible as warnings, not errors.
+    files: ["src/components/ui/**"],
+    rules: {
+      "react-hooks/set-state-in-effect": "warn",
     },
   },
 ]);

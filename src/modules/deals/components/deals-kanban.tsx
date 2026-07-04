@@ -11,6 +11,7 @@ import { DealCard } from "./deal-card"
 import { DealFormDialog } from "./deal-form-dialog"
 import { useDeleteDeal, useChangeDealStage } from "../hooks/use-deal-mutations"
 import { useFilters } from "@/hooks/use-filters"
+import { PRIORITY_OPTIONS } from "@/utils/params"
 import { formatCurrency } from "@/utils/format-currency"
 import type { Deal } from "@/db/schema"
 import { useTRPC } from "@/lib/trpc/client"
@@ -26,14 +27,12 @@ export function DealsKanban() {
     const { q, setFilter, dealPipelineId, dealPriority, hasActiveFilters, resetFilters } = useFilters()
 
   const { data: pipelines = [] } = useQuery(trpc.pipelines.list.queryOptions())
-  console.log("pipelines",pipelines)
     const activePipelineId = dealPipelineId || pipelines[0]?.id
 
   const { data: pipelineData } = useQuery(trpc.pipelines.getWithStages.queryOptions(
     { id: activePipelineId },
     { enabled: !!activePipelineId }
   ));
-  console.log("withstages",pipelineData)
     const { data: deals = [] } = useQuery(trpc.deals.byPipeline.queryOptions(
         { pipelineId: activePipelineId },
         { enabled: !!activePipelineId }
@@ -120,14 +119,16 @@ export function DealsKanban() {
 
                     <Select
                         value={dealPriority || "all"}
-                        onValueChange={(v) => setFilter("dealPriority", v === "all" ? null : v as any)}
+                        onValueChange={(v) =>
+                            setFilter("dealPriority", v === "all" ? null : (v as (typeof PRIORITY_OPTIONS)[number]))
+                        }
                     >
                         <SelectTrigger className="h-8 w-32 text-sm">
                             <SelectValue placeholder="Priority" />
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="all">All priorities</SelectItem>
-                            {["low", "medium", "high", "urgent"].map((p) => (
+                            {PRIORITY_OPTIONS.map((p) => (
                                 <SelectItem key={p} value={p} className="capitalize">{p}</SelectItem>
                             ))}
                         </SelectContent>

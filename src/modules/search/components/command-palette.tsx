@@ -59,14 +59,23 @@ export function CommandPalette() {
 
     const flat: SearchResult[] = grouped.flatMap((g) => g.items)
 
-    // Reset selection when results change
-    useEffect(() => setSelectedIdx(0), [debouncedQ])
+    // Reset selection when the query changes — "adjust state during render"
+    // pattern (react.dev) instead of a cascading setState-in-effect.
+    const [lastQ, setLastQ] = useState(debouncedQ)
+    if (lastQ !== debouncedQ) {
+        setLastQ(debouncedQ)
+        setSelectedIdx(0)
+    }
 
-    // Focus input when opening
+    // Focus input when opening (external system sync — allowed in an effect)
     useEffect(() => {
         if (open) setTimeout(() => inputRef.current?.focus(), 10)
-        else setQ("")
     }, [open])
+
+    function handleOpenChange(next: boolean) {
+        setOpen(next)
+        if (!next) setQ("")
+    }
 
     function navigate(href: string) {
         router.push(href)
@@ -89,7 +98,7 @@ export function CommandPalette() {
     const showEmpty = debouncedQ.length >= 1 && !isFetching && flat.length === 0
 
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={handleOpenChange}>
             <DialogContent className="p-0 gap-0 max-w-lg overflow-hidden">
                 {/* Search input */}
                 <div className="flex items-center gap-3 border-b px-4 py-3">

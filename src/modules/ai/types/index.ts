@@ -44,22 +44,19 @@ export interface DashboardSummaryOutput {
 }
 
 /** Mapped subset returned by listCompanies */
-export interface CompanyListItem
-  extends Pick<Company, "id" | "name" | "industry" | "lifecycleStage" | "city"> {}
+export type CompanyListItem = Pick<Company, "id" | "name" | "industry" | "lifecycleStage" | "city">
 
 /** Full Company row returned by getCompany */
 export type CompanyDetailOutput = Company
 
 /** Mapped subset returned by listContacts */
-export interface ContactListItem
-  extends Pick<Contact, "id" | "firstName" | "lastName" | "email" | "title" | "leadScore"> {}
+export type ContactListItem = Pick<Contact, "id" | "firstName" | "lastName" | "email" | "title" | "leadScore">
 
 /** Full Contact row returned by getContact */
 export type ContactDetailOutput = Contact
 
 /** Mapped subset returned by listDeals */
-export interface DealListItem
-  extends Pick<Deal, "id" | "title" | "value" | "probability" | "priority" | "expectedCloseDate"> {}
+export type DealListItem = Pick<Deal, "id" | "title" | "value" | "probability" | "priority" | "expectedCloseDate">
 
 /** Full Deal row returned by getDeal */
 export type DealDetailOutput = Deal
@@ -71,8 +68,7 @@ export interface DealStatsOutput {
 }
 
 /** Mapped subset returned by listOpenTasks */
-export interface TaskListItem
-  extends Pick<Task, "id" | "title" | "priority" | "dueDate" | "status"> {}
+export type TaskListItem = Pick<Task, "id" | "title" | "priority" | "dueDate" | "status">
 
 /** Full Activity row returned by recentActivity */
 export type ActivityItem = Activity

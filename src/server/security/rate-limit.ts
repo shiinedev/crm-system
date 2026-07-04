@@ -1,5 +1,5 @@
 import "server-only"
-import { redis } from "@/server/cache/reddis"
+import { redis } from "@/server/cache/redis"
 
 export type RateLimitResult = {
     success: boolean

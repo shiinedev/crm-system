@@ -3,6 +3,7 @@ import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
 import type { TRPCContext } from "./context";
+import { hasRole, type OrgRole } from "@/lib/roles";
 
 const t = initTRPC.context<TRPCContext>().create({
     transformer: superjson,
@@ -52,10 +53,9 @@ export const orgProcedure = protectedProcedure.use(({ ctx, next }) => {
     });
 });
 
-// ── Requires manager role or above 
+// ── Requires manager role or above (delegates to lib/roles — single source of truth)
 export const managerProcedure = orgProcedure.use(({ ctx, next }) => {
-    const allowedRoles = ["owner", "admin", "manager"];
-    if (!allowedRoles.includes(ctx.orgMember.role)) {
+    if (!hasRole(ctx.orgMember.role as OrgRole, "manager")) {
         throw new TRPCError({
             code: "FORBIDDEN",
             message: "Manager role or above required",
@@ -64,10 +64,9 @@ export const managerProcedure = orgProcedure.use(({ ctx, next }) => {
     return next({ ctx });
 });
 
-// ── Requires admin role or above 
+// ── Requires admin role or above
 export const adminProcedure = orgProcedure.use(({ ctx, next }) => {
-    const allowedRoles = ["owner", "admin"];
-    if (!allowedRoles.includes(ctx.orgMember.role)) {
+    if (!hasRole(ctx.orgMember.role as OrgRole, "admin")) {
         throw new TRPCError({
             code: "FORBIDDEN",
             message: "Admin role or above required",

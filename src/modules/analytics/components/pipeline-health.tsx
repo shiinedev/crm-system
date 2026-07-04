@@ -60,7 +60,7 @@ export function PipelineHealthChart() {
               <XAxis dataKey="stage" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} />
               <YAxis yAxisId="deals" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} width={30} />
               <Tooltip
-                formatter={(value: any, name: any) =>
+                formatter={(value, name) =>
                   name === "value"
                     ? [formatCurrency(Number(value ?? 0), "USD", true), "Value"]
                     : [String(value ?? 0), "Deals"]

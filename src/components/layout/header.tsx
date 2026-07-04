@@ -7,8 +7,8 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { NotificationsBell } from "@/modules/notifications/components/Notification-bell"
-import { CommandPalette } from "@/modules/search/components/command-plate"
+import { NotificationsBell } from "@/modules/notifications/components/notification-bell"
+import { CommandPalette } from "@/modules/search/components/command-palette"
 import { useCommandPalette } from "@/hooks/use-command-palette"
 import { useSession, signOut, organization } from "@/server/auth/auth-client"
 import { useRouter } from "next/navigation"
@@ -20,18 +20,19 @@ export function Header() {
   const router = useRouter()
   const { setOpen: openPalette } = useCommandPalette()
   const [orgs, setOrgs] = useState<Array<{ id: string; name: string; slug: string | null }>>([])
-  const [activeOrg, setActiveOrg] = useState<string | null>(null)
+  // Optimistic override while a switch is in flight; session is the source of truth
+  const [pendingOrg, setPendingOrg] = useState<string | null>(null)
+  const activeOrg = pendingOrg ?? session?.session?.activeOrganizationId ?? null
 
   useEffect(() => {
     organization.list().then((res) => {
       if (res.data) setOrgs(res.data)
     })
-    setActiveOrg(session?.session?.activeOrganizationId ?? null)
   }, [session])
 
   async function handleSwitchOrg(orgId: string) {
+    setPendingOrg(orgId)
     await organization.setActive({ organizationId: orgId })
-    setActiveOrg(orgId)
     router.refresh()
   }
 

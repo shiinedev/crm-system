@@ -66,8 +66,8 @@ export function WinLossChart() {
                 ))}
               </Pie>
                   <Tooltip
-                    formatter={(value:any, name:any, props:any) => [
-                  `${value} deals · ${formatCurrency(props.payload?.value ?? 0, "USD", true)}`,
+                    formatter={(value, name, item) => [
+                  `${value} deals · ${formatCurrency(Number(item?.payload?.value ?? 0), "USD", true)}`,
                   name,
                 ]}
                 contentStyle={{

@@ -24,6 +24,13 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>
 
+/** Shape of a member row from better-auth organization.listMembers() */
+type MemberRow = {
+    id: string
+    role: string
+    user?: { name?: string | null; email?: string | null } | null
+}
+
 const ROLE_COLORS: Record<string, "default" | "secondary" | "outline" | "destructive"> = {
     owner: "default",
     admin: "secondary",
@@ -35,9 +42,10 @@ const ROLE_COLORS: Record<string, "default" | "secondary" | "outline" | "destruc
 
 export default function MembersPage() {
     const { data: session } = useSession()
-    const [members, setMembers] = useState<any[]>([])
+    const [members, setMembers] = useState<MemberRow[]>([])
     const [loading, setLoading] = useState(true)
-    const [orgId, setOrgId] = useState<string | null>(null)
+    // Derived, not synced state — session is the source of truth
+    const orgId = session?.session?.activeOrganizationId ?? null
 
     const form = useForm<FormValues>({
         resolver: zodResolver(schema),
@@ -45,24 +53,29 @@ export default function MembersPage() {
     })
 
     useEffect(() => {
-        loadMembers()
-    }, [session])
-
-    async function loadMembers() {
-        const activeOrgId = session?.session?.activeOrganizationId
-        if (!activeOrgId) return
-        setOrgId(activeOrgId)
-        const res = await organization.listMembers()
-        if (res.data) setMembers((res.data as any).members ?? res.data)
-        setLoading(false)
-    }
+        if (!orgId) return
+        let cancelled = false
+        organization.listMembers().then((res) => {
+            if (cancelled) return
+            if (res.data) {
+                const data = res.data as { members?: MemberRow[] } | MemberRow[]
+                setMembers(Array.isArray(data) ? data : data.members ?? [])
+            }
+            setLoading(false)
+        })
+        return () => {
+            cancelled = true
+        }
+    }, [orgId])
 
     async function onInvite(values: FormValues) {
         if (!orgId) return
         const { error } = await organization.inviteMember({
             organizationId: orgId,
             email: values.email,
-            role: values.role as any,
+            // better-auth's client types only know its built-in roles; the server
+            // is configured with our custom memberRoles, so this is safe at runtime.
+            role: values.role as Parameters<typeof organization.inviteMember>[0]["role"],
         })
         if (error) {
             toast.error(error.message ?? "Failed to send invite")

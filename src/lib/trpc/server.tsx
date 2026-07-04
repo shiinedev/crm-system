@@ -27,6 +27,9 @@ export function HydrateClient(props: { children: React.ReactNode }) {
   );
 }
  
+// Verbatim helper from the official tRPC + TanStack Query RSC docs — the `any`s
+// are inherent to its type-erasing signature, so they're locally exempted.
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export function prefetch<T extends ReturnType<TRPCQueryOptions<any>>>(
   queryOptions: T,
 ) {
@@ -37,3 +40,4 @@ export function prefetch<T extends ReturnType<TRPCQueryOptions<any>>>(
     void queryClient.prefetchQuery(queryOptions);
   }
 }
+/* eslint-enable @typescript-eslint/no-explicit-any */

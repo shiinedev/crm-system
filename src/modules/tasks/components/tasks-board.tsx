@@ -12,6 +12,7 @@ import {
 import { TaskFormDialog } from "./task-form-dialog"
 import { useDeleteTask, useUpdateTask } from "../hooks/use-task-mutations"
 import { useFilters } from "@/hooks/use-filters"
+import { PRIORITY_OPTIONS, TASK_STATUS_OPTIONS } from "@/utils/params"
 import { formatDate } from "@/utils/format-date"
 import type { Task } from "@/db/schema"
 import { useQuery } from "@tanstack/react-query"
@@ -70,7 +71,9 @@ export function TasksBoard() {
                     </div>
                     <Select
                         value={taskStatus || "all"}
-                        onValueChange={(v) => setFilter("taskStatus", v === "all" ? null : v as any)}
+                        onValueChange={(v) =>
+                            setFilter("taskStatus", v === "all" ? null : (v as (typeof TASK_STATUS_OPTIONS)[number]))
+                        }
                     >
                         <SelectTrigger className="h-8 w-36 text-sm">
                             <SelectValue placeholder="Status" />
@@ -84,14 +87,16 @@ export function TasksBoard() {
                     </Select>
                     <Select
                         value={taskPriority || "all"}
-                        onValueChange={(v) => setFilter("taskPriority", v === "all" ? null : v as any)}
+                        onValueChange={(v) =>
+                            setFilter("taskPriority", v === "all" ? null : (v as (typeof PRIORITY_OPTIONS)[number]))
+                        }
                     >
                         <SelectTrigger className="h-8 w-32 text-sm">
                             <SelectValue placeholder="Priority" />
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="all">All priorities</SelectItem>
-                            {["low", "medium", "high", "urgent"].map((p) => (
+                            {PRIORITY_OPTIONS.map((p) => (
                                 <SelectItem key={p} value={p} className="capitalize">{p}</SelectItem>
                             ))}
                         </SelectContent>

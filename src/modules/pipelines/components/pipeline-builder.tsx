@@ -175,7 +175,7 @@ type PipelineCardProps = {
   stageForm:UseFormReturn<{
       name: string;
       probability?: string | undefined;
-  }, any, {
+  }, unknown, {
       name: string;
       probability?: string | undefined;
   }>

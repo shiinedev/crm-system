@@ -23,6 +23,8 @@ import { useTRPC } from "@/lib/trpc/client"
 import { useQuery } from "@tanstack/react-query"
 import { ContactsTableSkeleton } from "./contacts-skeleton"
 
+const STATUS_OPTIONS = ["active", "inactive", "bounced"] as const
+
 const STATUS_COLORS: Record<string, "default" | "success" | "destructive" | "warning" | "outline"> = {
     active: "success",
     inactive: "outline",
@@ -71,14 +73,16 @@ export function ContactsTable() {
                     </div>
                     <Select
                         value={contactStatus || "all"}
-                        onValueChange={(v) => setFilter("contactStatus", v === "all" ? null : v as any)}
+                        onValueChange={(v) =>
+                            setFilter("contactStatus", v === "all" ? null : (v as (typeof STATUS_OPTIONS)[number]))
+                        }
                     >
                         <SelectTrigger className="h-8 w-32 text-sm">
                             <SelectValue placeholder="Status" />
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="all">All statuses</SelectItem>
-                            {["active", "inactive", "bounced"].map((s) => (
+                            {STATUS_OPTIONS.map((s) => (
                                 <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>
                             ))}
                         </SelectContent>

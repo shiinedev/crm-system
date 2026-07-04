@@ -23,6 +23,8 @@ import { useQuery } from '@tanstack/react-query';
 import { CompaniesTableSkeleton } from "./companies-skelton"
 
 
+const LIFECYCLE_OPTIONS = ["lead", "prospect", "opportunity", "customer", "churned"] as const
+
 const LIFECYCLE_COLORS: Record<string, "default" | "info" | "warning" | "success" | "destructive" | "outline"> = {
   lead: "outline",
   prospect: "info",
@@ -89,14 +91,16 @@ export function CompaniesTable() {
           {/* Lifecycle filter */}
           <Select
             value={companyLifecycle || "all"}
-            onValueChange={(v) => setFilter("companyLifecycle", v === "all" ? null : v as any)}
+            onValueChange={(v) =>
+              setFilter("companyLifecycle", v === "all" ? null : (v as (typeof LIFECYCLE_OPTIONS)[number]))
+            }
           >
             <SelectTrigger className="h-8 w-36 text-sm">
               <SelectValue placeholder="Lifecycle" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All stages</SelectItem>
-              {["lead", "prospect", "opportunity", "customer", "churned"].map((s) => (
+              {LIFECYCLE_OPTIONS.map((s) => (
                 <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>
               ))}
             </SelectContent>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, type ComponentProps } from "react"
 import Link from "next/link"
 import { ArrowLeft, Globe, Building2, MapPin, Users, Pencil } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -16,7 +16,7 @@ import { formatDate } from "@/utils/format-date"
 import { stripProtocol } from "@/utils/strip-protocol"
 import type { Company, Contact, Deal, Activity } from "@/db/schema"
 
-const LIFECYCLE_COLORS: Record<string, any> = {
+const LIFECYCLE_COLORS: Record<string, ComponentProps<typeof Badge>["variant"]> = {
     lead: "outline", prospect: "info", opportunity: "warning",
     customer: "success", churned: "destructive",
 }
