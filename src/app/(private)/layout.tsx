@@ -1,6 +1,12 @@
+import type { Metadata } from "next"
 import { getSession } from "@/utils/get-session"
 import { Sidebar } from "@/components/layout/sidebar"
 import { Header } from "@/components/layout/header"
+
+// SEO: the app is session-gated tenant data — never index it.
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+}
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   await getSession() // redirects to /login if no session
