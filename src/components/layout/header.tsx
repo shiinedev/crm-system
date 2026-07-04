@@ -90,8 +90,14 @@ export function Header() {
             Search…
             <kbd className="ml-1 text-[10px] border rounded px-1">⌘K</kbd>
           </Button>
-          <Button variant="ghost" size="icon" className="sm:hidden" onClick={() => openPalette(true)}>
-            <Search className="h-4 w-4" />
+          <Button
+            variant="ghost"
+            size="icon"
+            className="sm:hidden"
+            onClick={() => openPalette(true)}
+            aria-label="Search"
+          >
+            <Search className="h-4 w-4" aria-hidden="true" />
           </Button>
 
           <NotificationsBell />
@@ -99,7 +105,7 @@ export function Header() {
           {/* User menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="rounded-full">
+              <Button variant="ghost" size="icon" className="rounded-full" aria-label="Account menu">
                 <Avatar className="h-7 w-7">
                   <AvatarImage src={user?.image ?? undefined} />
                   <AvatarFallback className="text-[10px]">
