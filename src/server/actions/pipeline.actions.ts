@@ -24,8 +24,9 @@ export const createPipelineAction = managerActionClient
 
 export const createPipelineStageAction = managerActionClient
     .inputSchema(createStageSchema)
-    .action(async ({ parsedInput }) => {
-        const stage = await createPipelineStage(parsedInput);
+    .action(async ({ parsedInput, ctx }) => {
+        const stage = await createPipelineStage(parsedInput, ctx.orgId);
+        if (!stage) throw new ActionError("Pipeline not found.");
         return { stage };
     });
 
@@ -40,17 +41,18 @@ export const updatePipelineAction = managerActionClient
 
 export const updatePipelineStageAction = managerActionClient
     .inputSchema(updateStageSchema)
-    .action(async ({ parsedInput }) => {
+    .action(async ({ parsedInput, ctx }) => {
         const { id, ...data } = parsedInput;
-        const stage = await updatePipelineStage(id, data.data);
+        const stage = await updatePipelineStage(id, ctx.orgId, data.data);
         if (!stage) throw new ActionError("Stage not found.");
         return { stage };
     });
 
 export const deletePipelineStageAction = managerActionClient
     .inputSchema(z.object({ id: z.string() }))
-    .action(async ({ parsedInput }) => {
-        await deletePipelineStage(parsedInput.id);
+    .action(async ({ parsedInput, ctx }) => {
+        const deleted = await deletePipelineStage(parsedInput.id, ctx.orgId);
+        if (!deleted) throw new ActionError("Stage not found.");
         return { success: true };
     });
 

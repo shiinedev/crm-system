@@ -97,8 +97,22 @@ export const SchemaDisplayPath = ({
 }: SchemaDisplayPathProps) => {
   const { path } = useContext(SchemaDisplayContext);
 
-  // Highlight path parameters
-  const highlightedPath = path.replaceAll(
+  // When children are provided, render them as normal React nodes —
+  // never through dangerouslySetInnerHTML.
+  if (children) {
+    return (
+      <span className={cn("font-mono text-sm", className)} {...props}>
+        {children}
+      </span>
+    );
+  }
+
+  // Escape the path before injecting, then highlight {params}.
+  const escapedPath = path
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
+  const highlightedPath = escapedPath.replaceAll(
     /\{([^}]+)\}/g,
     '<span class="text-blue-600 dark:text-blue-400">{$1}</span>'
   );
@@ -107,7 +121,7 @@ export const SchemaDisplayPath = ({
     <span
       className={cn("font-mono text-sm", className)}
       // oxlint-disable-next-line eslint-plugin-react(no-danger)
-      dangerouslySetInnerHTML={{ __html: children ?? highlightedPath }}
+      dangerouslySetInnerHTML={{ __html: highlightedPath }}
       {...props}
     />
   );

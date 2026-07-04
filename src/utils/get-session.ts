@@ -24,6 +24,23 @@ export async function getSession(redirectIfUnauthenticated = true) {
 }
 
 /**
+ * Session read for Route Handlers (API routes).
+ * Never redirects — API callers must receive proper 401/403 status codes,
+ * not a 307 to /login. Returns null when unauthenticated or no active org.
+ */
+export async function getApiSession() {
+    const headersList = await headers()
+    const session = await auth.api.getSession({ headers: headersList })
+    if (!session) return null
+
+    return {
+        user: session.user,
+        session: session.session,
+        orgId: session.session.activeOrganizationId ?? null,
+    }
+}
+
+/**
  * Like getSession but also asserts an active org.
  * Redirects to /settings/organization when no active org is set.
  */

@@ -14,6 +14,7 @@ import {
     getDealStats,
     getDealsByOwner,
 } from "@/db/queries/deals.queries";
+import { getStageById } from "@/db/queries/pipelines.queries";
 import { changeDealStageSchema, createDealSchema, updateDealSchema } from "@/lib/validations/deals";
 
 
@@ -61,7 +62,13 @@ export const dealsRouter = createTRPCRouter({
 
     create: orgProcedure
         .input(createDealSchema)
-        .mutation(({ ctx, input }) => {
+        .mutation(async ({ ctx, input }) => {
+            // Zero trust: pipeline/stage ids come from the client — prove they
+            // belong to this org (and to each other) before writing.
+            const stage = await getStageById(input.stageId, ctx.orgId);
+            if (!stage || stage.pipelineId !== input.pipelineId) {
+                throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid pipeline or stage" });
+            }
             return createDeal({ ...input, organizationId: ctx.orgId });
         }),
 
@@ -76,6 +83,8 @@ export const dealsRouter = createTRPCRouter({
     changeStage: orgProcedure
         .input(changeDealStageSchema)
         .mutation(async ({ ctx, input }) => {
+            const stage = await getStageById(input.stageId, ctx.orgId);
+            if (!stage) throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid stage" });
             const deal = await updateDealStage(input.id, ctx.orgId, input.stageId);
             if (!deal) throw new TRPCError({ code: "NOT_FOUND" });
             return deal;

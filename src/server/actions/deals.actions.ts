@@ -19,6 +19,13 @@ import { changeDealStageSchema, createDealSchema, updateDealSchema } from "@/lib
 export const createDealAction = orgActionClient
     .inputSchema(createDealSchema)
     .action(async ({ parsedInput, ctx }) => {
+        // Zero trust: pipeline/stage ids come from the client — prove they
+        // belong to this org (and to each other) before writing.
+        const stage = await getStageById(parsedInput.stageId, ctx.orgId);
+        if (!stage || stage.pipelineId !== parsedInput.pipelineId) {
+            throw new ActionError("Invalid pipeline or stage.");
+        }
+
         const deal = await createDeal({
             ...parsedInput,
             organizationId: ctx.orgId,
@@ -77,7 +84,7 @@ export const changeDealStageAction = orgActionClient
         const existingDeal = await getDealById(parsedInput.id, ctx.orgId);
         if (!existingDeal) throw new ActionError("Deal not found.");
 
-        const newStage = await getStageById(parsedInput.stageId);
+        const newStage = await getStageById(parsedInput.stageId, ctx.orgId);
         if (!newStage) throw new ActionError("Stage not found.");
 
         const deal = await updateDealStage(parsedInput.id, ctx.orgId, parsedInput.stageId);

@@ -43,8 +43,8 @@ export const pipelinesRouter = createTRPCRouter({
 
     stages: orgProcedure
         .input(z.object({ pipelineId: z.string() }))
-        .query(({ input }) => {
-            return getStagesByPipeline(input.pipelineId);
+        .query(({ ctx, input }) => {
+            return getStagesByPipeline(input.pipelineId, ctx.orgId);
         }),
 
     create: managerProcedure
@@ -59,8 +59,10 @@ export const pipelinesRouter = createTRPCRouter({
         .input(
             createStageSchema
         )
-        .mutation(({ input }) => {
-            return createPipelineStage(input);
+        .mutation(async ({ ctx, input }) => {
+            const stage = await createPipelineStage(input, ctx.orgId);
+            if (!stage) throw new TRPCError({ code: "NOT_FOUND", message: "Pipeline not found" });
+            return stage;
         }),
 
     update: managerProcedure
@@ -77,14 +79,18 @@ export const pipelinesRouter = createTRPCRouter({
         .input(
             updateStageSchema
         )
-        .mutation(({ input }) => {
-            return updatePipelineStage(input.id, input.data);
+        .mutation(async ({ ctx, input }) => {
+            const stage = await updatePipelineStage(input.id, ctx.orgId, input.data);
+            if (!stage) throw new TRPCError({ code: "NOT_FOUND" });
+            return stage;
         }),
 
     deleteStage: managerProcedure
         .input(z.object({ id: z.string() }))
-        .mutation(({ input }) => {
-            return deletePipelineStage(input.id);
+        .mutation(async ({ ctx, input }) => {
+            const deleted = await deletePipelineStage(input.id, ctx.orgId);
+            if (!deleted) throw new TRPCError({ code: "NOT_FOUND" });
+            return { success: true };
         }),
 
     delete: managerProcedure
