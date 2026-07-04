@@ -9,7 +9,9 @@ import { analyticsRouter } from "./routers/analytics.router"
 import { notificationsRouter } from "./routers/notifications.router"
 import { documentsRouter } from "./routers/documents.router"
 import { aiRouter } from "./routers/ai.router"
-import {automationRouter} from "./routers/automation.router"
+import { automationRouter } from "./routers/automation.router"
+import { searchRouter } from "./routers/search.router"
+import { roleRouter } from "./routers/role.router"
 
 export const appRouter = createTRPCRouter({
     companies: companiesRouter,
@@ -22,7 +24,9 @@ export const appRouter = createTRPCRouter({
     notifications: notificationsRouter,
     documents: documentsRouter,
     ai: aiRouter,
-    automation:automationRouter
+    automation: automationRouter,
+    search: searchRouter,
+    role: roleRouter,
 })
 
 export type AppRouter = typeof appRouter

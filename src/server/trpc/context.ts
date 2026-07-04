@@ -2,8 +2,7 @@ import "server-only";
 import { headers } from "next/headers";
 import { db } from "@/db";
 import { auth } from "@/server/auth/auth";
-import { members } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
+
 
 export async function createTRPCContext() {
     const headersList = await headers();
@@ -13,16 +12,7 @@ export async function createTRPCContext() {
 
     let orgMember = null;
     if (session?.user?.id && orgId) {
-        const [member] = await db
-            .select()
-            .from(members)
-            .where(
-                and(
-                    eq(members.userId, session.user.id),
-                    eq(members.organizationId, orgId)
-                )
-            )
-            .limit(1);
+        const member = await auth.api.getActiveMember();
         orgMember = member ?? null;
     }
 
@@ -31,6 +21,7 @@ export async function createTRPCContext() {
         session: session?.session ?? null,
         user: session?.user ?? null,
         orgId,
+        role: orgMember?.role ?? null,
         orgMember,
         headers: headersList,
     };

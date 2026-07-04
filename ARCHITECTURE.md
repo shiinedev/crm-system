@@ -1,6 +1,6 @@
 # AI-Powered CRM SaaS — System Design (SDLC)
 
-> Stack: Next.js 15 · TypeScript · tRPC · better-auth · Drizzle ORM · Neon · Tailwind · shadcn/ui · Vercel AI SDK · Inngest · Upstash Redis · Pinecone
+> Stack: Next.js 16 · TypeScript · tRPC · better-auth · Drizzle ORM · Neon · Tailwind · shadcn/ui · Vercel AI SDK · Inngest · Upstash Redis · Pinecone
 
 ---
 
@@ -8,43 +8,43 @@
 
 ### 1.1 Functional Requirements
 
-| Domain | Requirements |
-|---|---|
-| Auth | Email/password, OAuth, MFA, org switching, invite flow |
-| Multi-tenancy | Organization isolation, RBAC (6 roles), member management |
-| CRM Core | Companies, Contacts, Deals with full field sets |
-| Pipelines | Customizable stages, kanban, win/loss tracking |
-| Activities | Unified timeline: calls, emails, notes, tasks, status changes |
-| AI | Lead scoring, deal risk, email gen, summaries, chatbot, agent |
-| Automation | Trigger → Condition → Action engine (Inngest-backed) |
-| Documents | File upload, Markdown notes, versioning, semantic search |
-| Analytics | Revenue forecast, pipeline health, team performance charts |
-| Notifications | In-app, email, realtime, mentions, reminders |
-| Search | Global fuzzy + semantic AI search |
-| Integrations | Gmail, GCal, Slack, Stripe, Zoom (MCP-compatible) |
-| Realtime | Live updates, presence, collaborative editing |
+| Domain        | Requirements                                                  |
+| ------------- | ------------------------------------------------------------- |
+| Auth          | Email/password, OAuth, MFA, org switching, invite flow        |
+| Multi-tenancy | Organization isolation, RBAC (6 roles), member management     |
+| CRM Core      | Companies, Contacts, Deals with full field sets               |
+| Pipelines     | Customizable stages, kanban, win/loss tracking                |
+| Activities    | Unified timeline: calls, emails, notes, tasks, status changes |
+| AI            | Lead scoring, deal risk, email gen, summaries, chatbot, agent |
+| Automation    | Trigger → Condition → Action engine (Inngest-backed)          |
+| Documents     | File upload, Markdown notes, versioning, semantic search      |
+| Analytics     | Revenue forecast, pipeline health, team performance charts    |
+| Notifications | In-app, email, realtime, mentions, reminders                  |
+| Search        | Global fuzzy + semantic AI search                             |
+| Integrations  | Gmail, GCal, Slack, Stripe, Zoom (MCP-compatible)             |
+| Realtime      | Live updates, presence, collaborative editing                 |
 
 ### 1.2 Non-Functional Requirements
 
-| Concern | Target |
-|---|---|
-| Multi-tenant isolation | Row-level org scoping on every query |
-| Performance | < 200ms p95 API response; streaming AI |
-| Scalability | Stateless API + Neon connection pooling |
-| Security | JWT sessions, CSRF, rate-limiting, audit logs |
-| Observability | Structured logging, error tracking |
+| Concern                | Target                                        |
+| ---------------------- | --------------------------------------------- |
+| Multi-tenant isolation | Row-level org scoping on every query          |
+| Performance            | < 200ms p95 API response; streaming AI        |
+| Scalability            | Stateless API + Neon connection pooling       |
+| Security               | JWT sessions, CSRF, rate-limiting, audit logs |
+| Observability          | Structured logging, error tracking            |
 
 ### 1.3 RBAC Matrix
 
-| Permission | owner | admin | manager | sales_rep | support_agent | viewer |
-|---|---|---|---|---|---|---|
-| Manage org settings | ✓ | ✓ | — | — | — | — |
-| Invite/remove members | ✓ | ✓ | — | — | — | — |
-| Delete records | ✓ | ✓ | — | — | — | — |
-| Create/edit records | ✓ | ✓ | ✓ | ✓ | ✓ | — |
-| View all records | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Run automation | ✓ | ✓ | ✓ | — | — | — |
-| View analytics | ✓ | ✓ | ✓ | ✓ | — | ✓ |
+| Permission            | owner | admin | manager | sales_rep | support_agent | viewer |
+| --------------------- | ----- | ----- | ------- | --------- | ------------- | ------ |
+| Manage org settings   | ✓     | ✓     | —       | —         | —             | —      |
+| Invite/remove members | ✓     | ✓     | —       | —         | —             | —      |
+| Delete records        | ✓     | ✓     | —       | —         | —             | —      |
+| Create/edit records   | ✓     | ✓     | ✓       | ✓         | ✓             | —      |
+| View all records      | ✓     | ✓     | ✓       | ✓         | ✓             | ✓      |
+| Run automation        | ✓     | ✓     | ✓       | —         | —             | —      |
+| View analytics        | ✓     | ✓     | ✓       | ✓         | —             | ✓      |
 
 ---
 
@@ -912,13 +912,13 @@ crm/task.due
 
 ## Phase 8 — Production Checklist
 
-| Category | Item |
-|---|---|
-| Security | JWT secret rotation, CSRF tokens, CSP headers |
-| Database | Connection pooling (Neon serverless driver), indexes on all FK columns |
-| Caching | Redis for session data, org membership, frequently read lists |
-| AI | Rate limiting per org on OpenAI calls, cost tracking |
-| Observability | Structured logs, Sentry error tracking, Vercel analytics |
-| Scaling | Stateless API, Inngest for all async work, no long-running requests |
-| Backup | Neon point-in-time recovery, daily backups |
-| Compliance | Soft deletes on all user data, audit logs retained 90 days |
+| Category      | Item                                                                   |
+| ------------- | ---------------------------------------------------------------------- |
+| Security      | JWT secret rotation, CSRF tokens, CSP headers                          |
+| Database      | Connection pooling (Neon serverless driver), indexes on all FK columns |
+| Caching       | Redis for session data, org membership, frequently read lists          |
+| AI            | Rate limiting per org on OpenAI calls, cost tracking                   |
+| Observability | Structured logs, Sentry error tracking, Vercel analytics               |
+| Scaling       | Stateless API, Inngest for all async work, no long-running requests    |
+| Backup        | Neon point-in-time recovery, daily backups                             |
+| Compliance    | Soft deletes on all user data, audit logs retained 90 days             |

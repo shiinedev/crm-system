@@ -1,5 +1,5 @@
 import "server-only";
-import { eq, and, isNull, desc, sql, ne } from "drizzle-orm";
+import { eq, and, isNull, desc, sql, ne, ilike } from "drizzle-orm";
 import { db } from "@/db";
 import { deals, pipelineStages, type NewDeal } from "@/db/schema";
 
@@ -140,4 +140,19 @@ export async function getDealsByOwner(ownerId: string, organizationId: string) {
       )
     )
     .orderBy(desc(deals.createdAt));
+}
+
+export async function searchDeals(organizationId: string, query: string) {
+  return db
+    .select()
+    .from(deals)
+    .where(
+      and(
+        eq(deals.organizationId, organizationId),
+        isNull(deals.deletedAt),
+        ilike(deals.title, `%${query}%`)
+      )
+    )
+    .orderBy(desc(deals.createdAt))
+    .limit(10)
 }
