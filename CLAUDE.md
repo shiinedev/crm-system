@@ -69,7 +69,7 @@ RSC page (src/app) → feature component (src/modules/<feature>/components)
 
 - AI client is **OpenRouter** (`src/server/ai/client.ts`, exports `openRouter` + model constants) with the Vercel AI SDK. Streaming chat route: `src/app/api/ai/chat/route.ts`; chat UI uses `src/components/ai-elements`. Agent tools in `src/server/ai/agent/`, Pinecone RAG in `src/server/ai/rag/`.
 - Inngest: client + functions in `src/server/inngest/` (automation-runner, lead-scorer, task-reminder), served at `src/app/api/webhooks/inngest/route.ts`.
-- Redis cache: `src/server/cache/reddis.ts` (note the filename spelling) — `cacheGet`/`cacheSet`/`cacheDel` degrade gracefully to no-ops when Upstash env vars are unset; key builders in `src/server/cache/keys.ts`.
+- Redis cache: `src/server/cache/redis.ts` — `cacheGet`/`cacheSet`/`cacheDel` degrade gracefully to no-ops when Upstash env vars are unset; key builders in `src/server/cache/keys.ts`. Rate limiting: `src/server/security/rate-limit.ts` (fails open without Redis — prod needs Upstash).
 
 ## Conventions
 
@@ -77,3 +77,55 @@ RSC page (src/app) → feature component (src/modules/<feature>/components)
 - **File naming**: kebab-case for all files (`use-permissions.ts`, `companies-table.tsx`, `deals.router.ts`). Suffix conventions: `*.router.ts`, `*.actions.ts`, `*.queries.ts`, `*.schema.ts`, `*.store.ts`.
 - Server-only modules start with `import "server-only"`; client components with `"use client"`.
 - Path alias: `@/*` → `src/*`.
+
+## Standing workflow (every task, no need to ask)
+
+Work in this order: **scan → plan → implement → check → commit**. Don't ask for
+permission between steps; surface decisions in the commit message and tracking files.
+
+1. **Scan** the files the task touches plus their query/router/action chain.
+2. **Plan** briefly (in-message is fine for small tasks).
+3. **Implement** following the per-area rules below.
+4. **Check** (internal only — never launch a browser unless asked):
+   `bun run typecheck` and `bun run lint` must pass with **0 errors** before every commit;
+   `bun run build` before pushing a batch of commits.
+5. **Commit** per logical unit with a conventional prefix (`security:`, `seo:`, `ui/ux:`, `dx:`, `feat:`, `fix:`, `refactor:`).
+
+### Tracking registers (keep them true)
+
+`docs/tracking/{SECURITY,SEO,UI-UX,DX}.md` are living registers with numbered done/todo
+items. When you fix or add something in one of those areas, update the register in the
+same commit. When you pick up new work, check the register's todo list first.
+
+### Security rules (zero trust — non-negotiable)
+
+- `orgId` from session context only, never from client input.
+- Every new query function takes `organizationId` and filters on it; tables without an
+  org column inherit tenancy via a join through their parent (see pipeline stages).
+- Any client-supplied FK (stageId, pipelineId, ownerId, …) must be proven to belong to
+  the org before writing.
+- Route handlers (`src/app/api/**`) use `getApiSession()` and return 401/403/429 JSON —
+  never redirect. RSC pages use `getSession()`.
+- Expensive/abusable endpoints get `rateLimit()` (`src/server/security/rate-limit.ts`) before doing work.
+
+### UI/UX rules (WCAG 2.2 AA)
+
+- Icon-only buttons get `aria-label`; decorative icons `aria-hidden="true"`.
+- Animations only via `motion-safe:` utilities (global reduced-motion kill switch exists in `globals.css`).
+- One `h1` per page; heading levels never skip; keep shadcn focus-visible rings.
+- Keyboard-walk new flows (Tab/Enter/Esc) before calling them done.
+
+### SEO rules
+
+- Brand/description/keywords live in `src/lib/site.ts` only.
+- New public page → set `title`/`description` metadata and add to `src/app/sitemap.ts`.
+- New private route → keep it under `(private)` (inherits noindex) and add to the
+  disallow list in `src/app/robots.ts`.
+
+### DX rules
+
+- No `any` — type it, infer it, or cast to the library's own parameter type with a comment.
+- No hardcoded role arrays — use `hasRole()`/named checks from `src/lib/roles.ts`.
+- Shared enums/option lists live in one place (filters: `src/utils/params.ts`).
+- Vendored code (`src/components/ai-elements/`) is not edited for style and is excluded from lint.
+- Comment only what code can't say: invariants, security reasons, upstream quirks.
