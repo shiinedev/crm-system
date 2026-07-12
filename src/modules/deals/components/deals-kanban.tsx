@@ -15,11 +15,13 @@ import { formatCurrency } from "@/utils/format-currency"
 import type { Deal } from "@/db/schema"
 import { useTRPC } from "@/lib/trpc/client"
 import { useQuery } from "@tanstack/react-query"
+import { ConfirmDialog } from "@/components/confirm-dialog"
 
 export function DealsKanban() {
     const [formOpen, setFormOpen] = useState(false)
     const [editDeal, setEditDeal] = useState<Deal | undefined>()
     const [addingToStageId, setAddingToStageId] = useState<string | undefined>()
+    const [deleteTarget, setDeleteTarget] = useState<Deal | null>(null)
 
     const trpc = useTRPC()
 
@@ -188,7 +190,7 @@ export function DealsKanban() {
                                             <DealCard
                                                 deal={deal}
                                                 onEdit={handleEdit}
-                                                onDelete={(id) => deleteDeal({ id })}
+                                                onDelete={() => setDeleteTarget(deal)}
                                             />
                                         </div>
                                     ))}
@@ -225,6 +227,17 @@ export function DealsKanban() {
                 deal={editDeal}
                 defaultPipelineId={activePipelineId}
                 defaultStageId={addingToStageId}
+            />
+
+            <ConfirmDialog
+                open={!!deleteTarget}
+                onOpenChange={(open) => !open && setDeleteTarget(null)}
+                title={`Delete ${deleteTarget?.title ?? "deal"}?`}
+                description="This will remove the deal from the pipeline."
+                onConfirm={() => {
+                    if (deleteTarget) deleteDeal({ id: deleteTarget.id })
+                    setDeleteTarget(null)
+                }}
             />
         </div>
     )

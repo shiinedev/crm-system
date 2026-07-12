@@ -21,6 +21,7 @@ import { stripProtocol } from "@/utils/strip-protocol"
 import type { Company } from "@/db/schema"
 import { useQuery } from '@tanstack/react-query';
 import { CompaniesTableSkeleton } from "./companies-skelton"
+import { ConfirmDialog } from "@/components/confirm-dialog"
 
 
 const LIFECYCLE_COLORS: Record<string, "default" | "info" | "warning" | "success" | "destructive" | "outline"> = {
@@ -34,6 +35,7 @@ const LIFECYCLE_COLORS: Record<string, "default" | "info" | "warning" | "success
 export function CompaniesTable() {
   const [formOpen, setFormOpen] = useState(false)
   const [editCompany, setEditCompany] = useState<Company | undefined>()
+  const [deleteTarget, setDeleteTarget] = useState<Company | null>(null)
 
   const trpc = useTRPC()
 
@@ -214,7 +216,7 @@ export function CompaniesTable() {
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                           className="text-destructive focus:text-destructive"
-                          onClick={() => deleteCompany({ id: company.id })}
+                          onClick={() => setDeleteTarget(company)}
                         >
                           <Trash2 className="h-4 w-4" />
                           Delete
@@ -233,6 +235,17 @@ export function CompaniesTable() {
         open={formOpen}
         onOpenChange={setFormOpen}
         company={editCompany}
+      />
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        title={`Delete ${deleteTarget?.name ?? "company"}?`}
+        description="This will remove the company from your CRM. Related deals, contacts, and activities keep their history."
+        onConfirm={() => {
+          if (deleteTarget) deleteCompany({ id: deleteTarget.id })
+          setDeleteTarget(null)
+        }}
       />
     </div>
   )

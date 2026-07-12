@@ -11,6 +11,7 @@ import { formatDate } from "@/utils/format-date"
 import type { Document } from "@/db/schema"
 import { useRouter } from "next/navigation"
 import { Streamdown } from "streamdown"
+import { ConfirmDialog } from "@/components/confirm-dialog"
 
 interface DocumentDetailClientProps {
   document: Document
@@ -22,6 +23,7 @@ export function DocumentDetailClient({ document }: DocumentDetailClientProps) {
   const [content, setContent] = useState(document.content ?? "")
 
   const [view, setView] = useState<"write" | "preview">("write")
+  const [confirmDelete, setConfirmDelete] = useState(false)
 
   const { execute: updateDocument, isPending: isSaving } = useUpdateDocument()
   const { execute: deleteDocument, isPending: isDeleting } = useDeleteDocument()
@@ -73,7 +75,7 @@ export function DocumentDetailClient({ document }: DocumentDetailClientProps) {
             size="sm"
             variant="ghost"
             className="text-destructive hover:text-destructive"
-            onClick={handleDelete}
+            onClick={() => setConfirmDelete(true)}
             disabled={isDeleting}
           >
             <Trash2 className="h-3.5 w-3.5" />
@@ -120,6 +122,17 @@ export function DocumentDetailClient({ document }: DocumentDetailClientProps) {
           )}
         </div>
       </div>
+
+      <ConfirmDialog
+        open={confirmDelete}
+        onOpenChange={setConfirmDelete}
+        title={`Delete ${document.title || "document"}?`}
+        description="This will remove the document."
+        onConfirm={() => {
+          setConfirmDelete(false)
+          handleDelete()
+        }}
+      />
     </div>
   )
 }

@@ -28,6 +28,7 @@ import {
 } from "@/server/actions/pipeline.actions"
 import { useQuery } from "@tanstack/react-query"
 import { Pipeline } from "@/db/schema"
+import { ConfirmDialog } from "@/components/confirm-dialog"
 
 const pipelineSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -47,6 +48,7 @@ export function PipelineBuilder() {
   const trpc = useTRPC()
   const [newPipelineOpen, setNewPipelineOpen] = useState(false)
   const [addingStageToId, setAddingStageToId] = useState<string | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<{ type: "pipeline" | "stage"; id: string } | null>(null)
 
   const { data: pipelines = [], refetch } = useQuery(trpc.pipelines.list.queryOptions())
 
@@ -129,8 +131,8 @@ export function PipelineBuilder() {
               stageForm={stageForm}
               isCreatingStage={isCreatingStage}
               onAddStage={onAddStage}
-              onDeleteStage={(id: string) => deleteStage({ id })}
-              onDeletePipeline={(id: string) => deletePipeline({ id })}
+              onDeleteStage={(id: string) => setDeleteTarget({ type: "stage", id })}
+              onDeletePipeline={(id: string) => setDeleteTarget({ type: "pipeline", id })}
             />
           ))}
         </div>
@@ -161,6 +163,23 @@ export function PipelineBuilder() {
             </form>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        title={deleteTarget?.type === "pipeline" ? "Delete this pipeline?" : "Remove this stage?"}
+        description={
+          deleteTarget?.type === "pipeline"
+            ? "Deals in this pipeline will lose their pipeline assignment."
+            : "Deals in this stage will need to be moved to another stage."
+        }
+        confirmLabel={deleteTarget?.type === "pipeline" ? "Delete pipeline" : "Remove stage"}
+        onConfirm={() => {
+          if (deleteTarget?.type === "pipeline") deletePipeline({ id: deleteTarget.id })
+          if (deleteTarget?.type === "stage") deleteStage({ id: deleteTarget.id })
+          setDeleteTarget(null)
+        }}
+      />
     </div>
   )
 }

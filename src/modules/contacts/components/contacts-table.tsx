@@ -22,6 +22,7 @@ import type { Contact } from "@/db/schema"
 import { useTRPC } from "@/lib/trpc/client"
 import { useQuery } from "@tanstack/react-query"
 import { ContactsTableSkeleton } from "./contacts-skeleton"
+import { ConfirmDialog } from "@/components/confirm-dialog"
 
 const STATUS_COLORS: Record<string, "default" | "success" | "destructive" | "warning" | "outline"> = {
     active: "success",
@@ -32,6 +33,7 @@ const STATUS_COLORS: Record<string, "default" | "success" | "destructive" | "war
 export function ContactsTable() {
     const [formOpen, setFormOpen] = useState(false)
     const [editContact, setEditContact] = useState<Contact | undefined>()
+    const [deleteTarget, setDeleteTarget] = useState<Contact | null>(null)
 
     const { q, setFilter, contactStatus, hasActiveFilters, resetFilters } = useFilters()
 
@@ -178,7 +180,7 @@ export function ContactsTable() {
                                                 <DropdownMenuSeparator />
                                                 <DropdownMenuItem
                                                     className="text-destructive focus:text-destructive"
-                                                    onClick={() => deleteContact({ id: contact.id })}
+                                                    onClick={() => setDeleteTarget(contact)}
                                                 >
                                                     <Trash2 className="h-4 w-4" />Delete
                                                 </DropdownMenuItem>
@@ -193,6 +195,17 @@ export function ContactsTable() {
             </div>
 
             <ContactFormDialog open={formOpen} onOpenChange={setFormOpen} contact={editContact} />
+
+            <ConfirmDialog
+                open={!!deleteTarget}
+                onOpenChange={(open) => !open && setDeleteTarget(null)}
+                title={deleteTarget ? `Delete ${deleteTarget.firstName} ${deleteTarget.lastName}?` : "Delete contact?"}
+                description="This will remove the contact from your CRM."
+                onConfirm={() => {
+                    if (deleteTarget) deleteContact({ id: deleteTarget.id })
+                    setDeleteTarget(null)
+                }}
+            />
         </div>
     )
 }

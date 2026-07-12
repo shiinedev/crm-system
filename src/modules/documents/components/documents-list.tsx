@@ -16,10 +16,12 @@ import { formatRelativeTime } from "@/utils/format-date"
 import type { Document } from "@/db/schema"
 import Link from "next/link"
 import { useQuery } from "@tanstack/react-query"
+import { ConfirmDialog } from "@/components/confirm-dialog"
 
 export function DocumentsList() {
   const [formOpen, setFormOpen] = useState(false)
   const [editDoc, setEditDoc] = useState<Document | undefined>()
+  const [deleteTarget, setDeleteTarget] = useState<Document | null>(null)
   const { q, setFilter, hasActiveFilters, resetFilters } = useFilters()
   const trpc = useTRPC()
 
@@ -118,7 +120,7 @@ export function DocumentsList() {
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         className="text-destructive focus:text-destructive"
-                        onClick={() => deleteDocument({ id: doc.id })}
+                        onClick={() => setDeleteTarget(doc)}
                       >
                         <Trash2 className="h-4 w-4" />Delete
                       </DropdownMenuItem>
@@ -132,6 +134,17 @@ export function DocumentsList() {
       </div>
 
       <DocumentFormDialog open={formOpen} onOpenChange={setFormOpen} document={editDoc} />
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        title={`Delete ${deleteTarget?.title ?? "document"}?`}
+        description="This will remove the document."
+        onConfirm={() => {
+          if (deleteTarget) deleteDocument({ id: deleteTarget.id })
+          setDeleteTarget(null)
+        }}
+      />
     </div>
   )
 }
