@@ -14,7 +14,10 @@ export const env = createEnv({
     // GOOGLE_CLIENT_SECRET: z.string().optional(),
     // GITHUB_CLIENT_ID: z.string().optional(),
     // GITHUB_CLIENT_SECRET: z.string().optional(),
-    OPENROUTER_API_KEY: z.string().min(1, "OPENROUTER_API_KEY is misiing")
+    OPENROUTER_API_KEY: z.string().min(1, "OPENROUTER_API_KEY is missing"),
+    // Required in production for the Inngest webhook endpoint
+    INNGEST_EVENT_KEY: z.string().optional(),
+    INNGEST_SIGNING_KEY: z.string().optional(),
   },
   client: {
     NEXT_PUBLIC_APP_URL: z.string().url(),
@@ -32,6 +35,8 @@ export const env = createEnv({
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
     PINECONE_API_KEY: process.env.PINECONE_API_KEY,
     PINECONE_INDEX: process.env.PINECONE_INDEX,
-    OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY
+    OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY,
+    INNGEST_EVENT_KEY: process.env.INNGEST_EVENT_KEY,
+    INNGEST_SIGNING_KEY: process.env.INNGEST_SIGNING_KEY,
   }
 });
