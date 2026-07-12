@@ -1,25 +1,45 @@
-import { Inngest } from "inngest"
+import { Inngest, eventType } from "inngest"
+import { z } from "zod"
 
 export const inngest = new Inngest({ id: "crm-saas" })
 
-// ── Event types
-export type CrmEvents = {
-  "crm/deal.stage.changed": {
-    data: { dealId: string; fromStageId: string; toStageId: string; orgId: string; userId: string }
-  }
-  "crm/contact.created": {
-    data: { contactId: string; orgId: string; userId: string }
-  }
-  "crm/deal.created": {
-    data: { dealId: string; orgId: string; userId: string }
-  }
-  "crm/task.due": {
-    data: { taskId: string; orgId: string; assignedToId: string }
-  }
-  "crm/meeting.ended": {
-    data: { activityId: string; orgId: string; userId: string }
-  }
-  "crm/automation.trigger": {
-    data: { workflowId: string; orgId: string; resourceId: string; resourceType: string }
+// ── Typed event definitions (used as triggers and for sending)
+
+export const dealCreatedEvent = eventType("crm/deal.created", {
+  schema: z.object({ dealId: z.string(), orgId: z.string(), userId: z.string() }),
+})
+
+export const dealStageChangedEvent = eventType("crm/deal.stage.changed", {
+  schema: z.object({
+    dealId: z.string(),
+    fromStageId: z.string(),
+    toStageId: z.string(),
+    orgId: z.string(),
+    userId: z.string(),
+  }),
+})
+
+export const contactCreatedEvent = eventType("crm/contact.created", {
+  schema: z.object({ contactId: z.string(), orgId: z.string(), userId: z.string() }),
+})
+
+export const taskDueEvent = eventType("crm/task.due", {
+  schema: z.object({ taskId: z.string(), orgId: z.string(), assignedToId: z.string() }),
+})
+
+export const meetingEndedEvent = eventType("crm/meeting.ended", {
+  schema: z.object({ activityId: z.string(), orgId: z.string(), userId: z.string() }),
+})
+
+/**
+ * Fire-and-forget event send. Inngest being unreachable (e.g. no dev
+ * server running locally) must never fail the mutation that emitted
+ * the event. Usage: `await sendEvent(dealCreatedEvent.create({ ... }))`
+ */
+export async function sendEvent(event: { name: string; data: Record<string, unknown> }): Promise<void> {
+  try {
+    await inngest.send(event)
+  } catch (error) {
+    console.error(`[inngest] failed to send ${event.name}`, error)
   }
 }

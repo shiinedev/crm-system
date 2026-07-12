@@ -13,6 +13,7 @@ import { getStageById } from "@/db/queries/pipelines.queries";
 import { createNotification } from "@/db/queries/notifications.queries";
 import { createActivity } from "@/db/queries/activities.queries";
 import { changeDealStageSchema, createDealSchema, updateDealSchema } from "@/lib/validations/deals";
+import { sendEvent, dealCreatedEvent, dealStageChangedEvent } from "@/server/inngest/client";
 
 
 
@@ -44,6 +45,12 @@ export const createDealAction = orgActionClient
                 metadata: JSON.stringify({ dealId: deal.id }),
             });
         }
+
+        await sendEvent(dealCreatedEvent.create({
+            dealId: deal.id,
+            orgId: ctx.orgId,
+            userId: ctx.user.id,
+        }));
 
         return { deal };
     });
@@ -103,6 +110,14 @@ export const changeDealStageAction = orgActionClient
                 metadata: JSON.stringify({ dealId: deal.id, stageId: parsedInput.stageId }),
             });
         }
+
+        await sendEvent(dealStageChangedEvent.create({
+            dealId: deal.id,
+            fromStageId: existingDeal.stageId,
+            toStageId: parsedInput.stageId,
+            orgId: ctx.orgId,
+            userId: ctx.user.id,
+        }));
 
         return { deal };
     });
