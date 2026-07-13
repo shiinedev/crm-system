@@ -20,7 +20,7 @@ import { getInitials } from "@/utils/get-initials"
 import { formatRelativeTime } from "@/utils/format-date"
 import type { Contact } from "@/db/schema"
 import { useTRPC } from "@/lib/trpc/client"
-import { useQuery } from "@tanstack/react-query"
+import { useInfiniteQuery } from "@tanstack/react-query"
 import { ContactsTableSkeleton } from "./contacts-skeleton"
 import { ConfirmDialog } from "@/components/confirm-dialog"
 
@@ -39,7 +39,13 @@ export function ContactsTable() {
 
     const trpc = useTRPC();
 
-    const { data: contacts = [], isLoading } = useQuery(trpc.contacts.list.queryOptions())
+    const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery(
+        trpc.contacts.list.infiniteQueryOptions(
+            { limit: 50 },
+            { getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined }
+        )
+    )
+    const contacts = data?.pages.flatMap((page) => page.items) ?? []
     const { execute: deleteContact } = useDeleteContact()
 
     const filtered = contacts.filter((c) => {
@@ -191,6 +197,19 @@ export function ContactsTable() {
                             ))}
                         </tbody>
                     </table>
+                )}
+
+                {hasNextPage && (
+                    <div className="flex justify-center p-4">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => fetchNextPage()}
+                            disabled={isFetchingNextPage}
+                        >
+                            {isFetchingNextPage ? "Loading…" : "Load more"}
+                        </Button>
+                    </div>
                 )}
             </div>
 

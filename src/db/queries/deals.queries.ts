@@ -2,13 +2,22 @@ import "server-only";
 import { eq, and, isNull, desc, sql, ne, ilike } from "drizzle-orm";
 import { db } from "@/db";
 import { deals, pipelineStages, type NewDeal } from "@/db/schema";
+import { afterCursor, type PageOpts } from "./pagination";
 
-export async function getDealsByOrg(organizationId: string) {
-  return db
+export async function getDealsByOrg(organizationId: string, opts?: PageOpts) {
+  const query = db
     .select()
     .from(deals)
-    .where(and(eq(deals.organizationId, organizationId), isNull(deals.deletedAt)))
-    .orderBy(desc(deals.createdAt));
+    .where(
+      and(
+        eq(deals.organizationId, organizationId),
+        isNull(deals.deletedAt),
+        afterCursor(deals.createdAt, deals.id, opts?.cursor)
+      )
+    )
+    .orderBy(desc(deals.createdAt), desc(deals.id))
+    .$dynamic();
+  return opts?.limit ? query.limit(opts.limit) : query;
 }
 
 export async function getDealsByPipeline(

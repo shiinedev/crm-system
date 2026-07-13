@@ -19,7 +19,7 @@ import { useDeleteCompany } from "../hooks/use-company-mutations"
 import { useFilters } from "@/hooks/use-filters"
 import { stripProtocol } from "@/utils/strip-protocol"
 import type { Company } from "@/db/schema"
-import { useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import { CompaniesTableSkeleton } from "./companies-skelton"
 import { ConfirmDialog } from "@/components/confirm-dialog"
 
@@ -45,10 +45,14 @@ export function CompaniesTable() {
     hasActiveFilters, resetFilters,
   } = useFilters()
 
-  const { data: companies = [], isLoading } = useQuery(trpc.companies.list.queryOptions())
+  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery(
+    trpc.companies.list.infiniteQueryOptions(
+      { limit: 50 },
+      { getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined }
+    )
+  )
+  const companies = data?.pages.flatMap((page) => page.items) ?? []
   const { execute: deleteCompany } = useDeleteCompany();
-
-  console.log("Companies data:", companies);
 
   // Client-side filtering driven by URL params
   const filtered = companies.filter((c) => {
@@ -228,6 +232,19 @@ export function CompaniesTable() {
               ))}
             </tbody>
           </table>
+        )}
+
+        {hasNextPage && (
+          <div className="flex justify-center p-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => fetchNextPage()}
+              disabled={isFetchingNextPage}
+            >
+              {isFetchingNextPage ? "Loading…" : "Load more"}
+            </Button>
+          </div>
         )}
       </div>
 

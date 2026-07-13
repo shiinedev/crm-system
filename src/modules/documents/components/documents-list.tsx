@@ -15,7 +15,7 @@ import { useFilters } from "@/hooks/use-filters"
 import { formatRelativeTime } from "@/utils/format-date"
 import type { Document } from "@/db/schema"
 import Link from "next/link"
-import { useQuery } from "@tanstack/react-query"
+import { useInfiniteQuery } from "@tanstack/react-query"
 import { ConfirmDialog } from "@/components/confirm-dialog"
 
 export function DocumentsList() {
@@ -25,7 +25,13 @@ export function DocumentsList() {
   const { q, setFilter, hasActiveFilters, resetFilters } = useFilters()
   const trpc = useTRPC()
 
-  const { data: documents = [], isLoading } = useQuery(trpc.documents.list.queryOptions())
+  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery(
+    trpc.documents.list.infiniteQueryOptions(
+      { limit: 50 },
+      { getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined }
+    )
+  )
+  const documents = data?.pages.flatMap((page) => page.items) ?? []
   const { execute: deleteDocument } = useDeleteDocument()
 
   const filtered = documents.filter((d) =>
@@ -129,6 +135,19 @@ export function DocumentsList() {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {hasNextPage && (
+          <div className="flex justify-center p-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => fetchNextPage()}
+              disabled={isFetchingNextPage}
+            >
+              {isFetchingNextPage ? "Loading…" : "Load more"}
+            </Button>
           </div>
         )}
       </div>

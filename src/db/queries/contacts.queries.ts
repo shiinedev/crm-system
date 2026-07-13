@@ -2,13 +2,22 @@ import "server-only";
 import { eq, and, isNull, ilike, desc, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { contacts, type NewContact } from "@/db/schema";
+import { afterCursor, type PageOpts } from "./pagination";
 
-export async function getContactsByOrg(organizationId: string) {
-    return db
+export async function getContactsByOrg(organizationId: string, opts?: PageOpts) {
+    const query = db
         .select()
         .from(contacts)
-        .where(and(eq(contacts.organizationId, organizationId), isNull(contacts.deletedAt)))
-        .orderBy(desc(contacts.createdAt));
+        .where(
+            and(
+                eq(contacts.organizationId, organizationId),
+                isNull(contacts.deletedAt),
+                afterCursor(contacts.createdAt, contacts.id, opts?.cursor)
+            )
+        )
+        .orderBy(desc(contacts.createdAt), desc(contacts.id))
+        .$dynamic();
+    return opts?.limit ? query.limit(opts.limit) : query;
 }
 
 export async function getContactsByCompany(

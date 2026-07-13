@@ -8,11 +8,20 @@ import {
   getDocumentById,
   searchDocuments,
 } from "@/db/queries/documents.queries"
+import { toPage } from "@/db/queries/pagination"
+import { listInputSchema, DEFAULT_PAGE_SIZE } from "./list-input"
 
 export const documentsRouter = createTRPCRouter({
-  list: orgProcedure.query(({ ctx }) => {
-    return getDocumentsByOrg(ctx.orgId)
-  }),
+  list: orgProcedure
+    .input(listInputSchema)
+    .query(async ({ ctx, input }) => {
+      const limit = input?.limit ?? DEFAULT_PAGE_SIZE
+      const rows = await getDocumentsByOrg(ctx.orgId, {
+        limit: limit + 1,
+        cursor: input?.cursor ?? undefined,
+      })
+      return toPage(rows, limit)
+    }),
 
   byCompany: orgProcedure
     .input(z.object({ companyId: z.string() }))

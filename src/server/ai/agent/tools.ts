@@ -16,10 +16,10 @@ export function buildCrmTools(orgId: string) {
       execute: async () => getDashboardSummary(orgId),
     }),
     listCompanies: tool({
-      description: "List all companies in the organization.",
+      description: "List companies in the organization (most recent 100).",
       inputSchema: z.object({}),
       execute: async () => {
-        const companies = await getCompaniesByOrg(orgId)
+        const companies = await getCompaniesByOrg(orgId, { limit: 100 })
         return companies.map((c) => ({
           id: c.id, name: c.name, industry: c.industry,
           lifecycleStage: c.lifecycleStage, city: c.city,
@@ -32,10 +32,10 @@ export function buildCrmTools(orgId: string) {
       execute: async ({ id }) => getCompanyById(id, orgId),
     }),
     listContacts: tool({
-      description: "List all contacts in the organization.",
+      description: "List contacts in the organization (most recent 100).",
       inputSchema: z.object({}),
       execute: async () => {
-        const contacts = await getContactsByOrg(orgId)
+        const contacts = await getContactsByOrg(orgId, { limit: 100 })
         return contacts.map((c) => ({
           id: c.id, firstName: c.firstName, lastName: c.lastName,
           email: c.email, title: c.title, leadScore: c.leadScore,
@@ -48,10 +48,10 @@ export function buildCrmTools(orgId: string) {
       execute: async ({ id }) => getContactById(id, orgId),
     }),
     listDeals: tool({
-      description: "List all deals in the organization.",
+      description: "List deals in the organization (most recent 100).",
       inputSchema: z.object({}),
       execute: async () => {
-        const deals = await getDealsByOrg(orgId)
+        const deals = await getDealsByOrg(orgId, { limit: 100 })
         return deals.map((d) => ({
           id: d.id, title: d.title, value: d.value,
           probability: d.probability, priority: d.priority,
@@ -70,10 +70,10 @@ export function buildCrmTools(orgId: string) {
       execute: async () => getDealStats(orgId),
     }),
     listOpenTasks: tool({
-      description: "List all open tasks in the organization.",
+      description: "List open tasks in the organization (most recent 200).",
       inputSchema: z.object({}),
       execute: async () => {
-        const tasks = await getTasksByOrg(orgId)
+        const tasks = await getTasksByOrg(orgId, { limit: 200 })
         return tasks
           .filter((t) => t.status !== "done" && t.status !== "cancelled")
           .map((t) => ({ id: t.id, title: t.title, priority: t.priority, dueDate: t.dueDate, status: t.status }))

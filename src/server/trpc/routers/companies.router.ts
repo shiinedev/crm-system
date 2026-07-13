@@ -11,13 +11,22 @@ import {
     getCompanyCount,
 } from "@/db/queries/companies.queries";
 import { createCompanySchema, updateCompanySchema } from "@/lib/validations/companies";
+import { toPage } from "@/db/queries/pagination";
+import { listInputSchema, DEFAULT_PAGE_SIZE } from "./list-input";
 
 
 
 export const companiesRouter = createTRPCRouter({
-    list: orgProcedure.query(({ ctx }) => {
-        return getCompaniesByOrg(ctx.orgId);
-    }),
+    list: orgProcedure
+        .input(listInputSchema)
+        .query(async ({ ctx, input }) => {
+            const limit = input?.limit ?? DEFAULT_PAGE_SIZE;
+            const rows = await getCompaniesByOrg(ctx.orgId, {
+                limit: limit + 1,
+                cursor: input?.cursor ?? undefined,
+            });
+            return toPage(rows, limit);
+        }),
 
     search: orgProcedure
         .input(z.object({ query: z.string().min(1) }))
