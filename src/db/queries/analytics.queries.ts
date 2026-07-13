@@ -2,7 +2,7 @@ import "server-only";
 import { eq, and, isNull, gte, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { deals, companies, contacts, tasks } from "@/db/schema";
-import { cacheGet, cacheSet } from "@/server/cache/reddis";
+import { cacheGet, cacheSet } from "@/server/cache/redis";
 import { cacheKeys } from "@/server/cache/keys";
 
 export async function getRevenueByMonth(

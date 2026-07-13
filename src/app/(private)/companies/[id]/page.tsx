@@ -4,7 +4,7 @@ import { getCompanyById } from "@/db/queries/companies.queries"
 import { getActivitiesByCompany } from "@/db/queries/activities.queries"
 import { getContactsByCompany } from "@/db/queries/contacts.queries"
 import { getDealsByCompany } from "@/db/queries/deals.queries"
-import { CompanyDetailClient } from "@/modules/companies/components/compnay-details"
+import { CompanyDetailClient } from "@/modules/companies/components/company-details"
 
 interface Props {
     params: Promise<{ id: string }>

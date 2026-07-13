@@ -1,6 +1,6 @@
 import "server-only"
 import { Ratelimit } from "@upstash/ratelimit"
-import { redis } from "./reddis"
+import { redis } from "./redis"
 
 // Gracefully degrade when Redis isn't configured (local dev):
 // requests are allowed through, same policy as the cache helpers.

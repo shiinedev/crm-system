@@ -20,7 +20,7 @@ import { useFilters } from "@/hooks/use-filters"
 import { stripProtocol } from "@/utils/strip-protocol"
 import type { Company } from "@/db/schema"
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { CompaniesTableSkeleton } from "./companies-skelton"
+import { CompaniesTableSkeleton } from "./companies-skeleton"
 import { ConfirmDialog } from "@/components/confirm-dialog"
 
 

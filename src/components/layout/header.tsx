@@ -7,8 +7,8 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { NotificationsBell } from "@/modules/notifications/components/Notification-bell"
-import { CommandPalette } from "@/modules/search/components/command-plate"
+import { NotificationsBell } from "@/modules/notifications/components/notification-bell"
+import { CommandPalette } from "@/modules/search/components/command-palette"
 import { useCommandPalette } from "@/hooks/use-command-palette"
 import { useSession, signOut, organization } from "@/server/auth/auth-client"
 import { useRouter } from "next/navigation"

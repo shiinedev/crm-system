@@ -28,14 +28,12 @@ export function DealsKanban() {
     const { q, setFilter, dealPipelineId, dealPriority, hasActiveFilters, resetFilters } = useFilters()
 
   const { data: pipelines = [] } = useQuery(trpc.pipelines.list.queryOptions())
-  console.log("pipelines",pipelines)
     const activePipelineId = dealPipelineId || pipelines[0]?.id
 
   const { data: pipelineData } = useQuery(trpc.pipelines.getWithStages.queryOptions(
     { id: activePipelineId },
     { enabled: !!activePipelineId }
   ));
-  console.log("withstages",pipelineData)
     const { data: deals = [] } = useQuery(trpc.deals.byPipeline.queryOptions(
         { pipelineId: activePipelineId },
         { enabled: !!activePipelineId }

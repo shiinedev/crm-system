@@ -1,7 +1,7 @@
 import "server-only"
 import { Pinecone } from "@pinecone-database/pinecone"
 import { embed } from "ai"
-import { EMPPED_MODEL, openRouter,  } from "../client"
+import { EMBED_MODEL, openRouter,  } from "../client"
 import { env } from "@/lib/env"
 
 function getIndex() {
@@ -12,7 +12,7 @@ function getIndex() {
 
 async function embedText(text: string): Promise<number[]> {
   const { embedding } = await embed({
-    model:openRouter.textEmbeddingModel(EMPPED_MODEL),
+    model:openRouter.textEmbeddingModel(EMBED_MODEL),
     value: text,
   })
   return embedding

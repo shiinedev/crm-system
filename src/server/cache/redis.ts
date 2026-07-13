@@ -1,6 +1,6 @@
 import "server-only"
 import { Redis } from "@upstash/redis"
-import { env } from "@/lib//env"
+import { env } from "@/lib/env"
 
 // Gracefully degrade when Redis env vars aren't set (local dev without Redis)
 export const redis =
