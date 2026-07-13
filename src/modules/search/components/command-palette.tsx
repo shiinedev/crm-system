@@ -61,7 +61,9 @@ export function CommandPalette() {
 
     // Focus input when opening
     useEffect(() => {
-        if (open) setTimeout(() => inputRef.current?.focus(), 10)
+        if (!open) return
+        const timer = setTimeout(() => inputRef.current?.focus(), 10)
+        return () => clearTimeout(timer)
     }, [open])
 
     function handleOpenChange(next: boolean) {
@@ -141,6 +143,7 @@ export function CommandPalette() {
                                     const globalIdx = flat.findIndex((r) => r.id === item.id && r.type === item.type)
                                     return (
                                         <button
+                                            type="button"
                                             key={item.id}
                                             onClick={() => navigate(item.href)}
                                             className={cn(

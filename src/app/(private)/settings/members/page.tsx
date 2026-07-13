@@ -18,7 +18,7 @@ import { getInitials } from "@/utils/get-initials"
 import { Field, FieldContent, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
 
 const schema = z.object({
-    email: z.string().email("Invalid email"),
+    email: z.email("Invalid email"),
     role: z.enum(["admin", "manager", "sales_rep", "support_agent", "viewer"]),
 })
 

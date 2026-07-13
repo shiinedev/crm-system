@@ -20,16 +20,19 @@ export const taskDueScanner = inngest.createFunction(
 
     const dueTasks = await getTasksDueBetween(start, end)
 
-    for (const task of dueTasks) {
-      if (!task.assignedToId) continue
-      await sendEvent(
-        taskDueEvent.create({
-          taskId: task.id,
-          orgId: task.organizationId,
-          assignedToId: task.assignedToId,
-        })
-      )
-    }
+    await Promise.all(
+      dueTasks
+        .filter((task) => task.assignedToId)
+        .map((task) =>
+          sendEvent(
+            taskDueEvent.create({
+              taskId: task.id,
+              orgId: task.organizationId,
+              assignedToId: task.assignedToId!,
+            })
+          )
+        )
+    )
 
     return { scanned: dueTasks.length }
   }

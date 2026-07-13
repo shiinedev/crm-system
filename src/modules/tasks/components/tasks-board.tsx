@@ -41,6 +41,7 @@ function TaskCardContent({ task, onToggleComplete }: { task: Task; onToggleCompl
         <>
             <div className="flex items-start gap-2">
                 <button
+                    type="button"
                     className="mt-0.5 shrink-0"
                     onClick={(e) => { e.stopPropagation(); onToggleComplete?.(task) }}
                     aria-label={task.status === "done" ? "Mark as to do" : "Mark as done"}
@@ -85,11 +86,22 @@ function DraggableTaskCard({
     return (
         <div
             ref={ref}
+            role="button"
+            tabIndex={0}
+            aria-label={`Edit task: ${task.title}`}
             className={cn(
                 "group rounded-lg border bg-card p-3 hover:shadow-sm transition-shadow cursor-grab touch-none",
                 isDragging && "shadow-lg cursor-grabbing"
             )}
             onClick={() => onEdit(task)}
+            onKeyDown={(e) => {
+                // Enter/Space are reserved for dnd-kit keyboard dragging; use E to edit
+                if (e.key.toLowerCase() === "e") {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    onEdit(task)
+                }
+            }}
         >
             <TaskCardContent task={task} onToggleComplete={onToggleComplete} />
         </div>

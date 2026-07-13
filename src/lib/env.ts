@@ -3,12 +3,12 @@ import { z } from "zod";
 
 export const env = createEnv({
   server: {
-    DATABASE_URL: z.string().url(),
+    DATABASE_URL: z.url(),
     BETTER_AUTH_SECRET: z.string().min(32),
-    BETTER_AUTH_URL: z.string().url(),
+    BETTER_AUTH_URL: z.url(),
     PINECONE_API_KEY: z.string().min(1, "PINECONE_API_KEY is missing"),
     PINECONE_INDEX: z.string().default("crm-ai"),
-    UPSTASH_REDIS_REST_URL: z.string().url().optional(),
+    UPSTASH_REDIS_REST_URL: z.url().optional(),
     UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
     // GOOGLE_CLIENT_ID: z.string().optional(),
     // GOOGLE_CLIENT_SECRET: z.string().optional(),
@@ -19,12 +19,12 @@ export const env = createEnv({
     INNGEST_EVENT_KEY: z.string().optional(),
     INNGEST_SIGNING_KEY: z.string().optional(),
     // Gmail SMTP via nodemailer (use a Google App Password, not the account password)
-    GMAIL_USER: z.string().email().optional(),
+    GMAIL_USER: z.email().optional(),
     GMAIL_APP_PASSWORD: z.string().optional(),
     EMAIL_FROM: z.string().optional(),
   },
   client: {
-    NEXT_PUBLIC_APP_URL: z.string().url(),
+    NEXT_PUBLIC_APP_URL: z.url(),
   },
   runtimeEnv: {
     DATABASE_URL: process.env.DATABASE_URL,

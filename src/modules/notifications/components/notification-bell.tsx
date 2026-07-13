@@ -60,13 +60,22 @@ function NotificationItem({
 
     return (
         <div
+            role="button"
+            tabIndex={0}
             className={cn(
-                "flex gap-3 px-4 py-3 hover:bg-muted/40 transition-colors cursor-pointer group",
+                "flex gap-3 px-4 py-3 hover:bg-muted/40 transition-colors cursor-pointer group focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
                 isUnread && "bg-primary/5"
             )}
             onClick={() => {
                 if (isUnread) onRead(notification.id)
                 if (href) onNavigate(href)
+            }}
+            onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault()
+                    if (isUnread) onRead(notification.id)
+                    if (href) onNavigate(href)
+                }
             }}
         >
             <div className={cn(

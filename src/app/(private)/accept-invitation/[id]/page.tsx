@@ -16,23 +16,32 @@ export default function AcceptInvitationPage({ params }: { params: Promise<{ id:
   const started = useRef(false)
 
   useEffect(() => {
-    if (started.current) return
-    started.current = true
-    organization
-      .acceptInvitation({ invitationId: id })
-      .then(({ error }) => {
-        if (error) {
+    let active = true
+    let redirectTimer: ReturnType<typeof setTimeout> | undefined
+    if (!started.current) {
+      started.current = true
+      organization
+        .acceptInvitation({ invitationId: id })
+        .then(({ error }) => {
+          if (!active) return
+          if (error) {
+            setStatus("error")
+            setMessage(error.message ?? "This invitation is invalid or has expired.")
+          } else {
+            setStatus("accepted")
+            redirectTimer = setTimeout(() => router.push("/dashboard"), 1500)
+          }
+        })
+        .catch(() => {
+          if (!active) return
           setStatus("error")
-          setMessage(error.message ?? "This invitation is invalid or has expired.")
-        } else {
-          setStatus("accepted")
-          setTimeout(() => router.push("/dashboard"), 1500)
-        }
-      })
-      .catch(() => {
-        setStatus("error")
-        setMessage("This invitation is invalid or has expired.")
-      })
+          setMessage("This invitation is invalid or has expired.")
+        })
+    }
+    return () => {
+      active = false
+      clearTimeout(redirectTimer)
+    }
   }, [id, router])
 
   return (
