@@ -3,6 +3,20 @@
 import { useState } from "react"
 import { useTRPC } from "@/lib/trpc/client"
 import { Plus, Search, X, Calendar, AlertCircle, CheckCircle2, Circle, Clock } from "lucide-react"
+import {
+    DndContext,
+    DragOverlay,
+    PointerSensor,
+    KeyboardSensor,
+    useSensor,
+    useSensors,
+    useDraggable,
+    useDroppable,
+    type DragStartEvent,
+    type DragEndEvent,
+} from "@dnd-kit/core"
+import { useAction } from "next-safe-action/hooks"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -10,48 +24,191 @@ import {
     Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select"
 import { TaskFormDialog } from "./task-form-dialog"
-import { useDeleteTask, useUpdateTask } from "../hooks/use-task-mutations"
+import { updateTaskAction } from "@/server/actions/task.actions"
 import { useFilters } from "@/hooks/use-filters"
 import { formatDate } from "@/utils/format-date"
 import type { Task } from "@/db/schema"
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { cn } from "@/lib/utils"
 
-const COLUMNS: { id: string; label: string; icon: React.ElementType }[] = [
+type TaskStatus = NonNullable<Task["status"]>
+
+const COLUMNS: { id: TaskStatus; label: string; icon: React.ElementType }[] = [
     { id: "todo", label: "To Do", icon: Circle },
     { id: "in_progress", label: "In Progress", icon: Clock },
     { id: "done", label: "Done", icon: CheckCircle2 },
     { id: "cancelled", label: "Cancelled", icon: AlertCircle },
 ]
 
+const COLUMN_IDS = new Set<string>(COLUMNS.map((c) => c.id))
+
 const PRIORITY_COLORS: Record<string, "outline" | "info" | "warning" | "destructive"> = {
     low: "outline", medium: "info", high: "warning", urgent: "destructive",
+}
+
+function TaskCardContent({ task, onToggleComplete }: { task: Task; onToggleComplete?: (task: Task) => void }) {
+    return (
+        <>
+            <div className="flex items-start gap-2">
+                <button
+                    className="mt-0.5 shrink-0"
+                    onClick={(e) => { e.stopPropagation(); onToggleComplete?.(task) }}
+                    aria-label={task.status === "done" ? "Mark as to do" : "Mark as done"}
+                >
+                    {task.status === "done"
+                        ? <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                        : <Circle className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+                    }
+                </button>
+                <p className={`text-sm leading-snug flex-1 ${task.status === "done" ? "line-through text-muted-foreground" : ""}`}>
+                    {task.title}
+                </p>
+            </div>
+            <div className="mt-2 flex items-center gap-1.5 flex-wrap">
+                {task.priority && (
+                    <Badge variant={PRIORITY_COLORS[task.priority] ?? "outline"} className="text-[10px] px-1.5 py-0 capitalize">
+                        {task.priority}
+                    </Badge>
+                )}
+                {task.dueDate && (
+                    <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                        <Calendar className="h-2.5 w-2.5" />
+                        {formatDate(task.dueDate)}
+                    </span>
+                )}
+            </div>
+        </>
+    )
+}
+
+function DraggableTaskCard({
+    task,
+    onEdit,
+    onToggleComplete,
+}: {
+    task: Task
+    onEdit: (task: Task) => void
+    onToggleComplete: (task: Task) => void
+}) {
+    const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: task.id })
+
+    return (
+        <div
+            ref={setNodeRef}
+            {...listeners}
+            {...attributes}
+            className={cn(
+                "group rounded-lg border bg-card p-3 hover:shadow-sm transition-shadow cursor-grab touch-none",
+                isDragging && "opacity-40"
+            )}
+            onClick={() => onEdit(task)}
+        >
+            <TaskCardContent task={task} onToggleComplete={onToggleComplete} />
+        </div>
+    )
+}
+
+function DroppableColumn({
+    id,
+    children,
+}: {
+    id: TaskStatus
+    children: React.ReactNode
+}) {
+    const { setNodeRef, isOver } = useDroppable({ id })
+    return (
+        <div
+            ref={setNodeRef}
+            className={cn(
+                "flex flex-col gap-2 p-2 flex-1 overflow-y-auto rounded-b-xl transition-colors",
+                isOver && "bg-primary/5 ring-1 ring-inset ring-primary/20"
+            )}
+        >
+            {children}
+        </div>
+    )
 }
 
 export function TasksBoard() {
     const [formOpen, setFormOpen] = useState(false)
     const [editTask, setEditTask] = useState<Task | undefined>()
+    const [activeTask, setActiveTask] = useState<Task | null>(null)
+    // Optimistic status overrides so a dropped card moves immediately
+    const [optimistic, setOptimistic] = useState<Record<string, TaskStatus>>({})
 
     const trpc = useTRPC()
+    const queryClient = useQueryClient()
 
     const { q, setFilter, taskStatus, taskPriority, hasActiveFilters, resetFilters } = useFilters()
 
     const { data: tasks = [], isLoading } = useQuery(trpc.tasks.list.queryOptions())
-    const { execute: deleteTask } = useDeleteTask()
-    const { execute: updateTask } = useUpdateTask()
 
-    const filtered = tasks.filter((t) => {
+    const { execute: moveTask } = useAction(updateTaskAction, {
+        onSuccess: async ({ input }) => {
+            await queryClient.invalidateQueries({ queryKey: trpc.tasks.list.queryKey() })
+            setOptimistic((prev) => {
+                const next = { ...prev }
+                if (input.id) delete next[input.id]
+                return next
+            })
+        },
+        onError: ({ error, input }) => {
+            toast.error(error.serverError ?? "Failed to update task")
+            setOptimistic((prev) => {
+                const next = { ...prev }
+                if (input.id) delete next[input.id]
+                return next
+            })
+        },
+    })
+
+    // Require a small drag distance so plain clicks still open the edit dialog
+    const sensors = useSensors(
+        useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+        useSensor(KeyboardSensor)
+    )
+
+    const withOptimistic = tasks.map((t) =>
+        optimistic[t.id] ? { ...t, status: optimistic[t.id] } : t
+    )
+
+    const filtered = withOptimistic.filter((t) => {
         const matchesQ = !q || t.title.toLowerCase().includes(q.toLowerCase())
         const matchesStatus = !taskStatus || t.status === taskStatus
         const matchesPriority = !taskPriority || t.priority === taskPriority
         return matchesQ && matchesStatus && matchesPriority
     })
 
-    function getByStatus(status: string | null) {
+    function getByStatus(status: TaskStatus) {
         return filtered.filter((t) => t.status === status)
     }
 
+    function changeStatus(task: Task, status: TaskStatus) {
+        if (task.status === status) return
+        setOptimistic((prev) => ({ ...prev, [task.id]: status }))
+        moveTask({ id: task.id, status })
+    }
+
     function handleComplete(task: Task) {
-        updateTask({ id: task.id, status: (task.status === "done" ? "todo" : "done") as "todo" | "done" })
+        changeStatus(task, task.status === "done" ? "todo" : "done")
+    }
+
+    function handleDragStart(event: DragStartEvent) {
+        const task = withOptimistic.find((t) => t.id === event.active.id)
+        setActiveTask(task ?? null)
+    }
+
+    function handleDragEnd(event: DragEndEvent) {
+        setActiveTask(null)
+        const overId = event.over?.id
+        if (!overId || !COLUMN_IDS.has(String(overId))) return
+        const task = tasks.find((t) => t.id === event.active.id)
+        if (task) changeStatus(task, overId as TaskStatus)
+    }
+
+    function handleEdit(task: Task) {
+        setEditTask(task)
+        setFormOpen(true)
     }
 
     return (
@@ -112,67 +269,50 @@ export function TasksBoard() {
                 {isLoading ? (
                     <div className="flex items-center justify-center h-40 text-sm text-muted-foreground">Loading...</div>
                 ) : (
-                    <div className="flex h-full gap-3 p-4 min-w-max">
-                        {COLUMNS.map(({ id, label, icon: Icon }) => {
-                            const colTasks = getByStatus(id)
-                            return (
-                                <div key={id} className="flex flex-col w-72 shrink-0 rounded-xl bg-muted/40 border">
-                                    <div className="flex items-center gap-2 px-3 py-2.5 border-b">
-                                        <Icon className="h-3.5 w-3.5 text-muted-foreground" />
-                                        <span className="text-sm font-medium">{label}</span>
-                                        <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full ml-auto">
-                                            {colTasks.length}
-                                        </span>
-                                    </div>
-                                    <div className="flex flex-col gap-2 p-2 flex-1 overflow-y-auto">
-                                        {colTasks.map((task) => (
-                                            <div
-                                                key={task.id}
-                                                className="group rounded-lg border bg-card p-3 hover:shadow-sm transition-shadow cursor-pointer"
-                                                onClick={() => { setEditTask(task); setFormOpen(true) }}
+                    <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+                        <div className="flex h-full gap-3 p-4 min-w-max">
+                            {COLUMNS.map(({ id, label, icon: Icon }) => {
+                                const colTasks = getByStatus(id)
+                                return (
+                                    <div key={id} className="flex flex-col w-72 shrink-0 rounded-xl bg-muted/40 border">
+                                        <div className="flex items-center gap-2 px-3 py-2.5 border-b">
+                                            <Icon className="h-3.5 w-3.5 text-muted-foreground" />
+                                            <span className="text-sm font-medium">{label}</span>
+                                            <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full ml-auto">
+                                                {colTasks.length}
+                                            </span>
+                                        </div>
+                                        <DroppableColumn id={id}>
+                                            {colTasks.map((task) => (
+                                                <DraggableTaskCard
+                                                    key={task.id}
+                                                    task={task}
+                                                    onEdit={handleEdit}
+                                                    onToggleComplete={handleComplete}
+                                                />
+                                            ))}
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="w-full h-7 text-muted-foreground justify-start gap-1.5 text-xs mt-1"
+                                                onClick={() => { setEditTask(undefined); setFormOpen(true) }}
                                             >
-                                                <div className="flex items-start gap-2">
-                                                    <button
-                                                        className="mt-0.5 shrink-0"
-                                                        onClick={(e) => { e.stopPropagation(); handleComplete(task) }}
-                                                    >
-                                                        {task.status === "done"
-                                                            ? <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                                                            : <Circle className="h-4 w-4 text-muted-foreground hover:text-foreground" />
-                                                        }
-                                                    </button>
-                                                    <p className={`text-sm leading-snug flex-1 ${task.status === "done" ? "line-through text-muted-foreground" : ""}`}>
-                                                        {task.title}
-                                                    </p>
-                                                </div>
-                                                <div className="mt-2 flex items-center gap-1.5 flex-wrap">
-                                                    {task.priority && (
-                                                        <Badge variant={PRIORITY_COLORS[task.priority] ?? "outline"} className="text-[10px] px-1.5 py-0 capitalize">
-                                                            {task.priority}
-                                                        </Badge>
-                                                    )}
-                                                    {task.dueDate && (
-                                                        <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                                                            <Calendar className="h-2.5 w-2.5" />
-                                                            {formatDate(task.dueDate)}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        ))}
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            className="w-full h-7 text-muted-foreground justify-start gap-1.5 text-xs mt-1"
-                                            onClick={() => { setEditTask(undefined); setFormOpen(true) }}
-                                        >
-                                            <Plus className="h-3.5 w-3.5" />Add task
-                                        </Button>
+                                                <Plus className="h-3.5 w-3.5" />Add task
+                                            </Button>
+                                        </DroppableColumn>
                                     </div>
+                                )
+                            })}
+                        </div>
+
+                        <DragOverlay>
+                            {activeTask && (
+                                <div className="rounded-lg border bg-card p-3 shadow-lg rotate-2 cursor-grabbing w-[268px]">
+                                    <TaskCardContent task={activeTask} />
                                 </div>
-                            )
-                        })}
-                    </div>
+                            )}
+                        </DragOverlay>
+                    </DndContext>
                 )}
             </div>
 
