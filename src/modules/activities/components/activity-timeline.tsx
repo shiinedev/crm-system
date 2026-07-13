@@ -84,7 +84,7 @@ export function ActivityTimeline({ activities, isLoading }: ActivityTimelineProp
                                         <Button
                                             variant="ghost"
                                             size="icon"
-                                            className="h-6 w-6 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive"
+                                            className="h-6 w-6 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 group-focus-within:opacity-100 text-muted-foreground hover:text-destructive"
                                             onClick={() => setDeleteTarget(activity)}
                                         >
                                             <Trash2 className="h-3 w-3" />
