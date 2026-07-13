@@ -21,6 +21,7 @@ import { useTRPC } from "@/lib/trpc/client"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { ConfirmDialog } from "@/components/confirm-dialog"
 import { cn } from "@/lib/utils"
+import { BoardSkeleton } from "@/components/board-skeleton"
 
 function DraggableDealCard({
     deal,
@@ -67,17 +68,19 @@ export function DealsKanban() {
 
     const { q, setFilter, dealPipelineId, dealPriority, hasActiveFilters, resetFilters } = useFilters()
 
-  const { data: pipelines = [] } = useQuery(trpc.pipelines.list.queryOptions())
+  const { data: pipelines = [], isLoading: pipelinesLoading } = useQuery(trpc.pipelines.list.queryOptions())
     const activePipelineId = dealPipelineId || pipelines[0]?.id
 
-  const { data: pipelineData } = useQuery(trpc.pipelines.getWithStages.queryOptions(
+  const { data: pipelineData, isLoading: stagesLoading } = useQuery(trpc.pipelines.getWithStages.queryOptions(
     { id: activePipelineId },
     { enabled: !!activePipelineId }
   ));
-    const { data: deals = [] } = useQuery(trpc.deals.byPipeline.queryOptions(
+    const { data: deals = [], isLoading: dealsLoading } = useQuery(trpc.deals.byPipeline.queryOptions(
         { pipelineId: activePipelineId },
         { enabled: !!activePipelineId }
     ))
+
+    const isLoading = pipelinesLoading || (!!activePipelineId && (stagesLoading || dealsLoading))
 
     const { execute: deleteDeal } = useDeleteDeal()
 
@@ -204,6 +207,9 @@ export function DealsKanban() {
 
             {/* Kanban board */}
             <div className="flex-1 overflow-x-auto">
+                {isLoading ? (
+                    <BoardSkeleton columns={4} />
+                ) : (
                 <DragDropProvider onDragEnd={handleDragEnd}>
                 <div className="flex h-full gap-3 p-4 min-w-max">
                     {stages.map((stage) => {
@@ -269,6 +275,7 @@ export function DealsKanban() {
                     )}
                 </div>
                 </DragDropProvider>
+                )}
             </div>
 
             <DealFormDialog

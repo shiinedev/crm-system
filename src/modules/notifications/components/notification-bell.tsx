@@ -4,6 +4,7 @@ import { useState } from "react"
 import { Bell, CheckCheck, Megaphone, UserPlus, TrendingUp, CheckSquare, Sparkles, Zap } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Separator } from "@/components/ui/separator"
 import {
     Popover, PopoverContent, PopoverTrigger,
@@ -94,7 +95,7 @@ export function NotificationsBell() {
     const [open, setOpen] = useState(false)
     const router = useRouter()
     const trpc = useTRPC()
-    const { data: notifications = [], refetch } = useQuery(trpc.notifications.list.queryOptions(
+    const { data: notifications = [], refetch, isLoading } = useQuery(trpc.notifications.list.queryOptions(
         { limit: 30 },
         { enabled: open }
     ))
@@ -148,7 +149,19 @@ export function NotificationsBell() {
                     )}
                 </div>
                 <ScrollArea className="h-80">
-                    {notifications.length === 0 ? (
+                    {isLoading ? (
+                        <div className="space-y-1 p-1">
+                            {[...Array(4)].map((_, i) => (
+                                <div key={i} className="flex gap-3 px-4 py-3">
+                                    <Skeleton className="h-8 w-8 rounded-full shrink-0" />
+                                    <div className="flex-1 space-y-1.5">
+                                        <Skeleton className="h-4 w-3/4" />
+                                        <Skeleton className="h-3 w-1/2" />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : notifications.length === 0 ? (
                         <div className="flex flex-col items-center justify-center h-32 gap-1.5 text-muted-foreground">
                             <Bell className="h-5 w-5 opacity-30" />
                             <p className="text-sm">All caught up</p>

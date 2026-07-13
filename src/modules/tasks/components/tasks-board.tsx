@@ -19,6 +19,7 @@ import { formatDate } from "@/utils/format-date"
 import type { Task } from "@/db/schema"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { cn } from "@/lib/utils"
+import { BoardSkeleton } from "@/components/board-skeleton"
 
 type TaskStatus = NonNullable<Task["status"]>
 
@@ -243,7 +244,7 @@ export function TasksBoard() {
             {/* Board */}
             <div className="flex-1 overflow-x-auto">
                 {isLoading ? (
-                    <div className="flex items-center justify-center h-40 text-sm text-muted-foreground">Loading...</div>
+                    <BoardSkeleton columns={4} />
                 ) : (
                     <DragDropProvider onDragEnd={handleDragEnd}>
                         <div className="flex h-full gap-3 p-4 min-w-max">

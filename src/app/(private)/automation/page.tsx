@@ -7,6 +7,7 @@ import { toast } from "sonner"
 import { Plus, Zap, Pencil, Trash2, MoreHorizontal } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Switch } from "@/components/ui/switch"
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
@@ -70,7 +71,21 @@ export default function AutomationPage() {
 
       <div className="flex-1 overflow-auto p-6">
         {isLoading ? (
-          <div className="flex items-center justify-center h-40 text-sm text-muted-foreground">Loading...</div>
+          <div className="space-y-3 max-w-2xl">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="flex items-start gap-4 rounded-xl border bg-card p-4">
+                <Skeleton className="h-9 w-9 rounded-lg shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-4 w-40" />
+                  <div className="flex gap-2">
+                    <Skeleton className="h-5 w-28 rounded-full" />
+                    <Skeleton className="h-5 w-16 rounded-full" />
+                  </div>
+                </div>
+                <Skeleton className="h-5 w-9 rounded-full" />
+              </div>
+            ))}
+          </div>
         ) : workflows.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-40 gap-2">
             <Zap className="h-8 w-8 text-muted-foreground/40" />

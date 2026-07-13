@@ -29,6 +29,7 @@ import {
 import { useQuery } from "@tanstack/react-query"
 import { Pipeline } from "@/db/schema"
 import { ConfirmDialog } from "@/components/confirm-dialog"
+import { Skeleton } from "@/components/ui/skeleton"
 
 const pipelineSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -50,7 +51,7 @@ export function PipelineBuilder() {
   const [addingStageToId, setAddingStageToId] = useState<string | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<{ type: "pipeline" | "stage"; id: string } | null>(null)
 
-  const { data: pipelines = [], refetch } = useQuery(trpc.pipelines.list.queryOptions())
+  const { data: pipelines = [], refetch, isLoading } = useQuery(trpc.pipelines.list.queryOptions())
 
   const { execute: createPipeline, isPending: isCreatingPipeline } = useAction(createPipelineAction, {
     onSuccess: () => { toast.success("Pipeline created"); refetch(); setNewPipelineOpen(false) },
@@ -111,7 +112,22 @@ export function PipelineBuilder() {
         </Button>
       </div>
 
-      {pipelines.length === 0 ? (
+      {isLoading ? (
+        <div className="space-y-4">
+          {[...Array(2)].map((_, i) => (
+            <Card key={i}>
+              <CardHeader className="pb-3">
+                <Skeleton className="h-5 w-40" />
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <Skeleton className="h-9 w-full" />
+                <Skeleton className="h-9 w-full" />
+                <Skeleton className="h-9 w-2/3" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : pipelines.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-10 gap-2">
             <p className="text-sm text-muted-foreground">No pipelines yet.</p>
