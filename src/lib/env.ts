@@ -18,6 +18,10 @@ export const env = createEnv({
     // Required in production for the Inngest webhook endpoint
     INNGEST_EVENT_KEY: z.string().optional(),
     INNGEST_SIGNING_KEY: z.string().optional(),
+    // Gmail SMTP via nodemailer (use a Google App Password, not the account password)
+    GMAIL_USER: z.string().email().optional(),
+    GMAIL_APP_PASSWORD: z.string().optional(),
+    EMAIL_FROM: z.string().optional(),
   },
   client: {
     NEXT_PUBLIC_APP_URL: z.string().url(),
@@ -38,5 +42,8 @@ export const env = createEnv({
     OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY,
     INNGEST_EVENT_KEY: process.env.INNGEST_EVENT_KEY,
     INNGEST_SIGNING_KEY: process.env.INNGEST_SIGNING_KEY,
+    GMAIL_USER: process.env.GMAIL_USER,
+    GMAIL_APP_PASSWORD: process.env.GMAIL_APP_PASSWORD,
+    EMAIL_FROM: process.env.EMAIL_FROM,
   }
 });
