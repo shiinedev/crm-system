@@ -3,18 +3,7 @@
 import { useState } from "react"
 import { useTRPC } from "@/lib/trpc/client"
 import { Plus, Search, X, Calendar, AlertCircle, CheckCircle2, Circle, Clock } from "lucide-react"
-import {
-    DndContext,
-    DragOverlay,
-    PointerSensor,
-    KeyboardSensor,
-    useSensor,
-    useSensors,
-    useDraggable,
-    useDroppable,
-    type DragStartEvent,
-    type DragEndEvent,
-} from "@dnd-kit/core"
+import { DragDropProvider, useDraggable, useDroppable, type DragEndEvent } from "@dnd-kit/react"
 import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
@@ -90,16 +79,14 @@ function DraggableTaskCard({
     onEdit: (task: Task) => void
     onToggleComplete: (task: Task) => void
 }) {
-    const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: task.id })
+    const { ref, isDragging } = useDraggable({ id: task.id })
 
     return (
         <div
-            ref={setNodeRef}
-            {...listeners}
-            {...attributes}
+            ref={ref}
             className={cn(
                 "group rounded-lg border bg-card p-3 hover:shadow-sm transition-shadow cursor-grab touch-none",
-                isDragging && "opacity-40"
+                isDragging && "shadow-lg cursor-grabbing"
             )}
             onClick={() => onEdit(task)}
         >
@@ -115,13 +102,13 @@ function DroppableColumn({
     id: TaskStatus
     children: React.ReactNode
 }) {
-    const { setNodeRef, isOver } = useDroppable({ id })
+    const { ref, isDropTarget } = useDroppable({ id })
     return (
         <div
-            ref={setNodeRef}
+            ref={ref}
             className={cn(
                 "flex flex-col gap-2 p-2 flex-1 overflow-y-auto rounded-b-xl transition-colors",
-                isOver && "bg-primary/5 ring-1 ring-inset ring-primary/20"
+                isDropTarget && "bg-primary/5 ring-1 ring-inset ring-primary/20"
             )}
         >
             {children}
@@ -132,7 +119,6 @@ function DroppableColumn({
 export function TasksBoard() {
     const [formOpen, setFormOpen] = useState(false)
     const [editTask, setEditTask] = useState<Task | undefined>()
-    const [activeTask, setActiveTask] = useState<Task | null>(null)
     // Optimistic status overrides so a dropped card moves immediately
     const [optimistic, setOptimistic] = useState<Record<string, TaskStatus>>({})
 
@@ -162,12 +148,6 @@ export function TasksBoard() {
         },
     })
 
-    // Require a small drag distance so plain clicks still open the edit dialog
-    const sensors = useSensors(
-        useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-        useSensor(KeyboardSensor)
-    )
-
     const withOptimistic = tasks.map((t) =>
         optimistic[t.id] ? { ...t, status: optimistic[t.id] } : t
     )
@@ -193,17 +173,13 @@ export function TasksBoard() {
         changeStatus(task, task.status === "done" ? "todo" : "done")
     }
 
-    function handleDragStart(event: DragStartEvent) {
-        const task = withOptimistic.find((t) => t.id === event.active.id)
-        setActiveTask(task ?? null)
-    }
-
     function handleDragEnd(event: DragEndEvent) {
-        setActiveTask(null)
-        const overId = event.over?.id
-        if (!overId || !COLUMN_IDS.has(String(overId))) return
-        const task = tasks.find((t) => t.id === event.active.id)
-        if (task) changeStatus(task, overId as TaskStatus)
+        if (event.canceled) return
+        const targetId = event.operation.target?.id
+        const sourceId = event.operation.source?.id
+        if (!targetId || !COLUMN_IDS.has(String(targetId))) return
+        const task = tasks.find((t) => t.id === sourceId)
+        if (task) changeStatus(task, targetId as TaskStatus)
     }
 
     function handleEdit(task: Task) {
@@ -269,7 +245,7 @@ export function TasksBoard() {
                 {isLoading ? (
                     <div className="flex items-center justify-center h-40 text-sm text-muted-foreground">Loading...</div>
                 ) : (
-                    <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+                    <DragDropProvider onDragEnd={handleDragEnd}>
                         <div className="flex h-full gap-3 p-4 min-w-max">
                             {COLUMNS.map(({ id, label, icon: Icon }) => {
                                 const colTasks = getByStatus(id)
@@ -304,15 +280,7 @@ export function TasksBoard() {
                                 )
                             })}
                         </div>
-
-                        <DragOverlay>
-                            {activeTask && (
-                                <div className="rounded-lg border bg-card p-3 shadow-lg rotate-2 cursor-grabbing w-[268px]">
-                                    <TaskCardContent task={activeTask} />
-                                </div>
-                            )}
-                        </DragOverlay>
-                    </DndContext>
+                    </DragDropProvider>
                 )}
             </div>
 
