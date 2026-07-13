@@ -46,14 +46,16 @@ export const auth = betterAuth({
     baseURL: env.BETTER_AUTH_URL,
     emailAndPassword: {
         enabled: true,
-        requireEmailVerification: false,
+        requireEmailVerification: true,
         sendResetPassword: async ({ user, url }) => {
             await sendEmail({ to: user.email, ...resetPasswordEmail({ name: user.name, url }) });
         },
     },
     emailVerification: {
         sendOnSignUp: true,
-        sendVerificationEmail: async ({ user, url }) => {
+        autoSignInAfterVerification: true,
+        sendVerificationEmail: async ({ user, token }) => {
+            const url = `${env.BETTER_AUTH_URL}/api/auth/verify-email?token=${token}&callbackURL=/verify-email`;
             await sendEmail({ to: user.email, ...verifyEmailEmail({ name: user.name, url }) });
         },
     },

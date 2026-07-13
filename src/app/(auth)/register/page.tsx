@@ -41,14 +41,13 @@ export default function RegisterPage() {
       name: values.name,
       email: values.email,
       password: values.password,
-      callbackURL: "/dashboard",
     })
     setIsPending(false)
     if (error) {
       toast.error(error.message ?? "Failed to create account")
     } else {
-      toast.success("Account created! Redirecting...")
-      router.push("/dashboard")
+      toast.success("Account created! Check your email to verify it.")
+      router.push(`/verify-email?pending=1&email=${encodeURIComponent(values.email)}`)
     }
   }
 

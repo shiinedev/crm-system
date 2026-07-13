@@ -17,4 +17,5 @@ export const {
     organization,
     requestPasswordReset,
     resetPassword,
+    sendVerificationEmail,
 } = authClient;

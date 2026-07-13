@@ -39,7 +39,13 @@ export default function LoginPage() {
     })
     setIsPending(false)
     if (error) {
-      toast.error(error.message ?? "Invalid credentials")
+      if (error.status === 403) {
+        // Unverified email — better-auth blocks sign-in until verified
+        toast.info("Please verify your email first. Check your inbox for the link.")
+        router.push(`/verify-email?pending=1&email=${encodeURIComponent(values.email)}`)
+      } else {
+        toast.error(error.message ?? "Invalid credentials")
+      }
     } else {
       router.push("/dashboard")
     }
