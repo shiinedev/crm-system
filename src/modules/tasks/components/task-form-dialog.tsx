@@ -71,7 +71,7 @@ export function TaskFormDialog({ open, onOpenChange, task, dealId, companyId, co
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-md">
+            <DialogContent className="max-w-md max-h-[90dvh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>{isEdit ? "Edit task" : "New task"}</DialogTitle>
                 </DialogHeader>
@@ -91,7 +91,7 @@ export function TaskFormDialog({ open, onOpenChange, task, dealId, companyId, co
                                 {fieldState.error && <FieldError errors={[fieldState.error]} />}
                             </Field>
                         )} />
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <Controller control={form.control} name="priority" render={({ field, fieldState }) => (
                                 <Field>
                                     <FieldLabel>Priority</FieldLabel>
@@ -115,7 +115,7 @@ export function TaskFormDialog({ open, onOpenChange, task, dealId, companyId, co
                             )} />
                             {isEdit && (
                                 <Controller control={form.control} name="status" render={({ field, fieldState }) => (
-                                    <Field className="col-span-2">
+                                    <Field className="sm:col-span-2">
                                         <FieldLabel>Status</FieldLabel>
                                         <Select value={field.value ?? "todo"} onValueChange={field.onChange}>
                                             <FieldContent><SelectTrigger><SelectValue /></SelectTrigger></FieldContent>

@@ -44,14 +44,14 @@ export function CompanyDetailClient({ company, activities, contacts, deals }: Co
                         Companies
                     </Link>
                 </div>
-                <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start justify-between gap-4 flex-wrap">
                     <div className="flex items-center gap-3">
                         <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-muted text-lg font-semibold">
                             {company.name[0].toUpperCase()}
                         </div>
                         <div>
                             <h1 className="text-xl font-semibold">{company.name}</h1>
-                            <div className="flex items-center gap-3 mt-0.5">
+                            <div className="flex items-center gap-3 mt-0.5 flex-wrap">
                                 {company.industry && (
                                     <span className="text-sm text-muted-foreground flex items-center gap-1">
                                         <Building2 className="h-3.5 w-3.5" />
@@ -92,22 +92,22 @@ export function CompanyDetailClient({ company, activities, contacts, deals }: Co
                 </div>
 
                 {/* Stats row */}
-                <div className="flex gap-6 mt-4 pt-4 border-t">
+                <div className="grid grid-cols-2 gap-4 sm:flex sm:gap-6 mt-4 pt-4 border-t">
                     <div className="text-center">
                         <p className="text-lg font-semibold">{contacts.length}</p>
                         <p className="text-xs text-muted-foreground">Contacts</p>
                     </div>
-                    <Separator orientation="vertical" className="h-10" />
+                    <Separator orientation="vertical" className="h-10 hidden sm:block" />
                     <div className="text-center">
                         <p className="text-lg font-semibold">{openDeals.length}</p>
                         <p className="text-xs text-muted-foreground">Open deals</p>
                     </div>
-                    <Separator orientation="vertical" className="h-10" />
+                    <Separator orientation="vertical" className="h-10 hidden sm:block" />
                     <div className="text-center">
                         <p className="text-lg font-semibold">{formatCurrency(totalDealValue, "USD", true)}</p>
                         <p className="text-xs text-muted-foreground">Pipeline value</p>
                     </div>
-                    <Separator orientation="vertical" className="h-10" />
+                    <Separator orientation="vertical" className="h-10 hidden sm:block" />
                     <div className="text-center">
                         <p className="text-lg font-semibold">{activities.length}</p>
                         <p className="text-xs text-muted-foreground">Activities</p>
@@ -118,7 +118,7 @@ export function CompanyDetailClient({ company, activities, contacts, deals }: Co
             {/* Tabs */}
             <div className="flex-1 overflow-hidden">
                 <Tabs defaultValue="activity" className="h-full flex flex-col">
-                    <TabsList className="mx-6 mt-4 w-fit">
+                    <TabsList className="mx-4 md:mx-6 mt-4 w-fit max-w-[calc(100%-2rem)] overflow-x-auto justify-start">
                         <TabsTrigger value="activity">Activity</TabsTrigger>
                         <TabsTrigger value="contacts">Contacts ({contacts.length})</TabsTrigger>
                         <TabsTrigger value="deals">Deals ({openDeals.length})</TabsTrigger>

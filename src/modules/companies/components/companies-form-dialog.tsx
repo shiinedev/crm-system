@@ -78,12 +78,12 @@ export function CompanyFormDialog({ open, onOpenChange, company }: CompanyFormDi
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-lg">
+            <DialogContent className="max-w-lg max-h-[90dvh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>{isEdit ? "Edit company" : "Add company"}</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                    <FieldGroup className="grid grid-cols-2 gap-3">
+                    <FieldGroup className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <Controller
                             control={form.control}
                             name="name"
@@ -211,7 +211,7 @@ export function CompanyFormDialog({ open, onOpenChange, company }: CompanyFormDi
                             control={form.control}
                             name="notes"
                             render={({ field, fieldState }) => (
-                                <Field className="col-span-2" date-invalid={fieldState.invalid}>
+                                <Field className="sm:col-span-2" date-invalid={fieldState.invalid}>
                                     <FieldLabel>Notes</FieldLabel>
                                     <FieldContent><Textarea placeholder="Any additional notes..." {...field} date-invalid={fieldState.invalid} /></FieldContent>
                                     <FieldError errors={[fieldState.error]} />

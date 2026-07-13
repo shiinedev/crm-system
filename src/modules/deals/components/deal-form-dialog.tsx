@@ -113,14 +113,14 @@ export function DealFormDialog({ open, onOpenChange, deal, defaultPipelineId, de
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-lg">
+            <DialogContent className="max-w-lg max-h-[90dvh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>{isEdit ? "Edit deal" : "New deal"}</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                    <FieldGroup className="grid grid-cols-2 gap-3">
+                    <FieldGroup className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <Controller control={form.control} name="title" render={({ field, fieldState }) => (
-                            <Field data-invalid={fieldState.invalid} className="col-span-2">
+                            <Field data-invalid={fieldState.invalid} className="sm:col-span-2">
                                 <FieldLabel>Deal title *</FieldLabel>
                                 <FieldContent><Input placeholder="Acme Corp — Enterprise Plan" {...field} /></FieldContent>
                                 {fieldState.error && <FieldError errors={[fieldState.error]} />}
