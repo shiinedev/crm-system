@@ -84,6 +84,7 @@ export const companies = pgTable(
     },
     (t) => [
         index("companies_org_idx").on(t.organizationId),
+        index("companies_org_created_idx").on(t.organizationId, t.createdAt),
         uniqueIndex("companies_slug_org_idx").on(t.slug, t.organizationId),
         index("companies_owner_idx").on(t.assignedOwnerId),
     ]

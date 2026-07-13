@@ -111,6 +111,8 @@ export const deals = pgTable(
   },
   (t) => [
     index("deals_org_idx").on(t.organizationId),
+    index("deals_org_created_idx").on(t.organizationId, t.createdAt),
+    index("deals_org_stage_idx").on(t.organizationId, t.stageId),
     index("deals_stage_idx").on(t.stageId),
     index("deals_owner_idx").on(t.ownerId),
     index("deals_company_idx").on(t.companyId),

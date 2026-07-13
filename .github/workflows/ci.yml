@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    env:
+      # Dummy values so t3-env validation passes at build time.
+      # The build never connects to these services.
+      DATABASE_URL: postgres://user:pass@localhost:5432/db
+      BETTER_AUTH_SECRET: ci-only-secret-0123456789abcdef01234567
+      BETTER_AUTH_URL: http://localhost:3001
+      NEXT_PUBLIC_APP_URL: http://localhost:3001
+      PINECONE_API_KEY: ci-dummy
+      OPENROUTER_API_KEY: ci-dummy
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Typecheck
+        run: bun run typecheck
+
+      # TODO: make blocking once the pre-existing lint errors are fixed
+      - name: Lint (non-blocking)
+        run: bun run lint
+        continue-on-error: true
+
+      - name: Build
+        run: bun run build

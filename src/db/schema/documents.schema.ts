@@ -40,6 +40,7 @@ export const documents = pgTable(
     },
     (t) => [
         index("documents_org_idx").on(t.organizationId),
+        index("documents_org_created_idx").on(t.organizationId, t.createdAt),
         index("documents_company_idx").on(t.companyId),
         index("documents_deal_idx").on(t.dealId),
     ]

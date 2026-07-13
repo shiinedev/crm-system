@@ -8,6 +8,13 @@
       "when": 1783893471814,
       "tag": "0000_uneven_supreme_intelligence",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1783913176429,
+      "tag": "0001_yielding_gargoyle",
+      "breakpoints": true
     }
   ]
 }
