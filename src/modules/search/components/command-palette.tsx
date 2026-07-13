@@ -59,14 +59,18 @@ export function CommandPalette() {
 
     const flat: SearchResult[] = grouped.flatMap((g) => g.items)
 
-    // Reset selection when results change
-    useEffect(() => setSelectedIdx(0), [debouncedQ])
-
     // Focus input when opening
     useEffect(() => {
         if (open) setTimeout(() => inputRef.current?.focus(), 10)
-        else setQ("")
     }, [open])
+
+    function handleOpenChange(next: boolean) {
+        setOpen(next)
+        if (!next) {
+            setQ("")
+            setSelectedIdx(0)
+        }
+    }
 
     function navigate(href: string) {
         router.push(href)
@@ -89,7 +93,7 @@ export function CommandPalette() {
     const showEmpty = debouncedQ.length >= 1 && !isFetching && flat.length === 0
 
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={handleOpenChange}>
             <DialogContent className="p-0 gap-0 max-w-lg overflow-hidden">
                 {/* Search input */}
                 <div className="flex items-center gap-3 border-b px-4 py-3">
@@ -100,7 +104,7 @@ export function CommandPalette() {
                     <input
                         ref={inputRef}
                         value={q}
-                        onChange={(e) => setQ(e.target.value)}
+                        onChange={(e) => { setQ(e.target.value); setSelectedIdx(0) }}
                         onKeyDown={onKeyDown}
                         placeholder="Search companies, contacts, deals…"
                         className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"

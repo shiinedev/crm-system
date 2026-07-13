@@ -9,6 +9,7 @@ import {
 } from "@/db/queries/companies.queries";
 import { createNotification } from "@/db/queries/notifications.queries";
 import { createCompanySchema, updateCompanySchema } from "@/lib/validations/companies";
+import { logAudit } from "@/server/audit";
 
 
 
@@ -34,6 +35,15 @@ export const createCompanyAction = orgActionClient
             });
         }
 
+
+        await logAudit({
+            orgId: ctx.orgId,
+            userId: ctx.user.id,
+            action: "company.created",
+            resourceType: "company",
+            resourceId: company.id,
+            after: company,
+        });
 
         return { company };
     });
@@ -62,6 +72,14 @@ export const updateCompanyAction = orgActionClient
                 metadata: JSON.stringify({ companyId: company.id }),
             });
         }
+        await logAudit({
+            orgId: ctx.orgId,
+            userId: ctx.user.id,
+            action: "company.updated",
+            resourceType: "company",
+            resourceId: company.id,
+            after: data,
+        });
         return { company };
     });
 
@@ -70,5 +88,13 @@ export const deleteCompanyAction = managerActionClient
     .action(async ({ parsedInput, ctx }) => {
         const company = await softDeleteCompany(parsedInput.id, ctx.orgId);
         if (!company) throw new ActionError("Company not found.");
+        await logAudit({
+            orgId: ctx.orgId,
+            userId: ctx.user.id,
+            action: "company.deleted",
+            resourceType: "company",
+            resourceId: company.id,
+            before: company,
+        });
         return { company };
     });

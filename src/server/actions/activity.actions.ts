@@ -5,6 +5,7 @@ import { orgActionClient } from "./safe-action";
 import { createActivity, deleteActivity } from "@/db/queries/activities.queries";
 import { createNotification } from "@/db/queries/notifications.queries";
 import { createActivitySchema } from "@/lib/validations/activity";
+import { logAudit } from "@/server/audit";
 
 export const createActivityAction = orgActionClient
     .inputSchema(createActivitySchema)
@@ -49,5 +50,12 @@ export const deleteActivityAction = orgActionClient
     .inputSchema(z.object({ id: z.string() }))
     .action(async ({ parsedInput, ctx }) => {
         await deleteActivity(parsedInput.id, ctx.orgId);
+        await logAudit({
+            orgId: ctx.orgId,
+            userId: ctx.user.id,
+            action: "activity.deleted",
+            resourceType: "activity",
+            resourceId: parsedInput.id,
+        });
         return { success: true };
     });

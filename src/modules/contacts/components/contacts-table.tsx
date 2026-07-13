@@ -79,7 +79,7 @@ export function ContactsTable() {
                     </div>
                     <Select
                         value={contactStatus || "all"}
-                        onValueChange={(v) => setFilter("contactStatus", v === "all" ? null : v as any)}
+                        onValueChange={(v) => setFilter("contactStatus", v === "all" ? null : (v as typeof contactStatus))}
                     >
                         <SelectTrigger className="h-8 w-32 text-sm">
                             <SelectValue placeholder="Status" />

@@ -95,7 +95,7 @@ export function CompaniesTable() {
           {/* Lifecycle filter */}
           <Select
             value={companyLifecycle || "all"}
-            onValueChange={(v) => setFilter("companyLifecycle", v === "all" ? null : v as any)}
+            onValueChange={(v) => setFilter("companyLifecycle", v === "all" ? null : (v as typeof companyLifecycle))}
           >
             <SelectTrigger className="h-8 w-36 text-sm">
               <SelectValue placeholder="Lifecycle" />

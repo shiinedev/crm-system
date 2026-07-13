@@ -16,7 +16,7 @@ import { formatDate } from "@/utils/format-date"
 import { stripProtocol } from "@/utils/strip-protocol"
 import type { Company, Contact, Deal, Activity } from "@/db/schema"
 
-const LIFECYCLE_COLORS: Record<string, any> = {
+const LIFECYCLE_COLORS: Record<string, "default" | "info" | "warning" | "success" | "destructive" | "outline"> = {
     lead: "outline", prospect: "info", opportunity: "warning",
     customer: "success", churned: "destructive",
 }

@@ -10,6 +10,7 @@ import {
 import { createNotification } from "@/db/queries/notifications.queries";
 import { createContactSchema, updateContactSchema } from "@/lib/validations/contacts";
 import { sendEvent, contactCreatedEvent } from "@/server/inngest/client";
+import { logAudit } from "@/server/audit";
 
 
 
@@ -42,6 +43,15 @@ export const createContactAction = orgActionClient
             userId: ctx.user.id,
         }));
 
+        await logAudit({
+            orgId: ctx.orgId,
+            userId: ctx.user.id,
+            action: "contact.created",
+            resourceType: "contact",
+            resourceId: contact.id,
+            after: contact,
+        });
+
         return { contact };
     });
 
@@ -71,6 +81,15 @@ export const updateContactAction = orgActionClient
             });
         }
 
+        await logAudit({
+            orgId: ctx.orgId,
+            userId: ctx.user.id,
+            action: "contact.updated",
+            resourceType: "contact",
+            resourceId: contact.id,
+            after: data,
+        });
+
         return { contact };
     });
 
@@ -79,5 +98,13 @@ export const deleteContactAction = managerActionClient
     .action(async ({ parsedInput, ctx }) => {
         const contact = await softDeleteContact(parsedInput.id, ctx.orgId);
         if (!contact) throw new ActionError("Contact not found.");
+        await logAudit({
+            orgId: ctx.orgId,
+            userId: ctx.user.id,
+            action: "contact.deleted",
+            resourceType: "contact",
+            resourceId: contact.id,
+            before: contact,
+        });
         return { contact };
     });

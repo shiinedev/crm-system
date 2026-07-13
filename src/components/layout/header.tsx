@@ -20,18 +20,18 @@ export function Header() {
   const router = useRouter()
   const { setOpen: openPalette } = useCommandPalette()
   const [orgs, setOrgs] = useState<Array<{ id: string; name: string; slug: string | null }>>([])
-  const [activeOrg, setActiveOrg] = useState<string | null>(null)
+  const [manualOrg, setManualOrg] = useState<string | null>(null)
+  const activeOrg = manualOrg ?? session?.session?.activeOrganizationId ?? null
 
   useEffect(() => {
     organization.list().then((res) => {
       if (res.data) setOrgs(res.data)
     })
-    setActiveOrg(session?.session?.activeOrganizationId ?? null)
   }, [session])
 
   async function handleSwitchOrg(orgId: string) {
     await organization.setActive({ organizationId: orgId })
-    setActiveOrg(orgId)
+    setManualOrg(orgId)
     router.refresh()
   }
 

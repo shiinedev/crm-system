@@ -14,6 +14,7 @@ import { createNotification } from "@/db/queries/notifications.queries";
 import { createActivity } from "@/db/queries/activities.queries";
 import { changeDealStageSchema, createDealSchema, updateDealSchema } from "@/lib/validations/deals";
 import { sendEvent, dealCreatedEvent, dealStageChangedEvent } from "@/server/inngest/client";
+import { logAudit } from "@/server/audit";
 
 
 
@@ -52,6 +53,15 @@ export const createDealAction = orgActionClient
             userId: ctx.user.id,
         }));
 
+        await logAudit({
+            orgId: ctx.orgId,
+            userId: ctx.user.id,
+            action: "deal.created",
+            resourceType: "deal",
+            resourceId: deal.id,
+            after: deal,
+        });
+
         return { deal };
     });
 
@@ -74,6 +84,15 @@ export const updateDealAction = orgActionClient
                 metadata: JSON.stringify({ dealId: deal.id }),
             });
         }
+
+        await logAudit({
+            orgId: ctx.orgId,
+            userId: ctx.user.id,
+            action: "deal.updated",
+            resourceType: "deal",
+            resourceId: deal.id,
+            after: data,
+        });
 
         return { deal };
     });
@@ -119,6 +138,16 @@ export const changeDealStageAction = orgActionClient
             userId: ctx.user.id,
         }));
 
+        await logAudit({
+            orgId: ctx.orgId,
+            userId: ctx.user.id,
+            action: "deal.stage.changed",
+            resourceType: "deal",
+            resourceId: deal.id,
+            before: { stageId: existingDeal.stageId },
+            after: { stageId: parsedInput.stageId },
+        });
+
         return { deal };
     });
 
@@ -127,5 +156,13 @@ export const deleteDealAction = managerActionClient
     .action(async ({ parsedInput, ctx }) => {
         const deal = await softDeleteDeal(parsedInput.id, ctx.orgId);
         if (!deal) throw new ActionError("Deal not found.");
+        await logAudit({
+            orgId: ctx.orgId,
+            userId: ctx.user.id,
+            action: "deal.deleted",
+            resourceType: "deal",
+            resourceId: deal.id,
+            before: deal,
+        });
         return { deal };
     });

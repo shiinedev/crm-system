@@ -40,7 +40,7 @@ export function RevenueChart() {
                 tickLine={false} axisLine={false} width={60}
               />
               <Tooltip
-                formatter={(value: any, _name: any) => [
+                formatter={(value) => [
                   formatCurrency(Number(value ?? 0), "USD"), "Value",
                 ]}
                 contentStyle={{ background: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: 12 }}

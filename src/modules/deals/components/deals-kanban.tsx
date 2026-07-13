@@ -120,7 +120,7 @@ export function DealsKanban() {
 
                     <Select
                         value={dealPriority || "all"}
-                        onValueChange={(v) => setFilter("dealPriority", v === "all" ? null : v as any)}
+                        onValueChange={(v) => setFilter("dealPriority", v === "all" ? null : (v as typeof dealPriority))}
                     >
                         <SelectTrigger className="h-8 w-32 text-sm">
                             <SelectValue placeholder="Priority" />

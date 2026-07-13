@@ -18,15 +18,17 @@ export const searchParams = {
 
     // Companies
     companyLifecycle: parseAsStringEnum([
+        "",
         "lead", "prospect", "opportunity", "customer", "churned",
-    ]).withDefault("" as any),
+    ]).withDefault(""),
     companyIndustry: parseAsString.withDefault(""),
     companySize: parseAsString.withDefault(""),
 
     // Contacts
     contactStatus: parseAsStringEnum([
+        "",
         "active", "inactive", "bounced",
-    ]).withDefault("" as any),
+    ]).withDefault(""),
     contactCompanyId: parseAsString.withDefault(""),
 
     // Deals
@@ -34,28 +36,34 @@ export const searchParams = {
     dealStageId: parseAsString.withDefault(""),
     dealOwnerId: parseAsString.withDefault(""),
     dealPriority: parseAsStringEnum([
+        "",
         "low", "medium", "high", "urgent",
-    ]).withDefault("" as any),
+    ]).withDefault(""),
     dealForecast: parseAsStringEnum([
+        "",
         "pipeline", "best_case", "commit", "closed_won", "closed_lost", "omitted",
-    ]).withDefault("" as any),
+    ]).withDefault(""),
 
     // Tasks
     taskStatus: parseAsStringEnum([
+        "",
         "todo", "in_progress", "done", "cancelled",
-    ]).withDefault("" as any),
+    ]).withDefault(""),
     taskAssigneeId: parseAsString.withDefault(""),
     taskPriority: parseAsStringEnum([
+        "",
         "low", "medium", "high", "urgent",
-    ]).withDefault("" as any),
+    ]).withDefault(""),
 
     // Activities
     activityType: parseAsStringEnum([
+        "",
         "call", "meeting", "email", "note", "task", "status_change", "document_upload", "comment",
-    ]).withDefault("" as any),
+    ]).withDefault(""),
 
     // Notifications
-    notificationRead: parseAsStringEnum(["read", "unread"]).withDefault("" as any),
+    notificationRead: parseAsStringEnum([
+        "","read", "unread"]).withDefault(""),
 
     // Tags (multi-select)
     tags: parseAsArrayOf(parseAsString).withDefault([]),

@@ -30,10 +30,8 @@ jobs:
       - name: Typecheck
         run: bun run typecheck
 
-      # TODO: make blocking once the pre-existing lint errors are fixed
-      - name: Lint (non-blocking)
+      - name: Lint
         run: bun run lint
-        continue-on-error: true
 
       - name: Build
         run: bun run build

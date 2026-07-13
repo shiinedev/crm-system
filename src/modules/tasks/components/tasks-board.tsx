@@ -70,7 +70,7 @@ export function TasksBoard() {
                     </div>
                     <Select
                         value={taskStatus || "all"}
-                        onValueChange={(v) => setFilter("taskStatus", v === "all" ? null : v as any)}
+                        onValueChange={(v) => setFilter("taskStatus", v === "all" ? null : (v as typeof taskStatus))}
                     >
                         <SelectTrigger className="h-8 w-36 text-sm">
                             <SelectValue placeholder="Status" />
@@ -84,7 +84,7 @@ export function TasksBoard() {
                     </Select>
                     <Select
                         value={taskPriority || "all"}
-                        onValueChange={(v) => setFilter("taskPriority", v === "all" ? null : v as any)}
+                        onValueChange={(v) => setFilter("taskPriority", v === "all" ? null : (v as typeof taskPriority))}
                     >
                         <SelectTrigger className="h-8 w-32 text-sm">
                             <SelectValue placeholder="Priority" />

@@ -57,8 +57,8 @@ export function AIActionButton({ action, resourceId, onSuccess, label, className
 
       toast.success(`${config.label} complete`)
       onSuccess?.(String(result))
-    } catch (err: any) {
-      toast.error(err?.message ?? `Failed to run ${config.label}`)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : `Failed to run ${config.label}`)
     } finally {
       setIsRunning(false)
     }

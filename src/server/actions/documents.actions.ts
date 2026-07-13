@@ -8,6 +8,7 @@ import {
 } from "@/db/queries/documents.queries"
 import { createActivity } from "@/db/queries/activities.queries"
 import { createNoteSchema, deleteDocumentSchema, updateDocumentSchema } from "@/lib/validations/document"
+import { logAudit } from "@/server/audit"
 
 
 export const createNoteAction = orgActionClient
@@ -30,6 +31,15 @@ export const createNoteAction = orgActionClient
       })
     }
 
+    await logAudit({
+      orgId: ctx.orgId,
+      userId: ctx.user.id,
+      action: "document.created",
+      resourceType: "document",
+      resourceId: doc.id,
+      after: doc,
+    })
+
     return { doc }
   })
 
@@ -39,6 +49,14 @@ export const updateDocumentAction = orgActionClient
     const { id, ...data } = parsedInput
     const doc = await updateDocument(id, ctx.orgId, data)
     if (!doc) throw new ActionError("Document not found.")
+    await logAudit({
+      orgId: ctx.orgId,
+      userId: ctx.user.id,
+      action: "document.updated",
+      resourceType: "document",
+      resourceId: doc.id,
+      after: data,
+    })
     return { doc }
   })
 
@@ -47,5 +65,13 @@ export const deleteDocumentAction = orgActionClient
   .action(async ({ parsedInput, ctx }) => {
     const doc = await softDeleteDocument(parsedInput.id, ctx.orgId)
     if (!doc) throw new ActionError("Document not found.")
+    await logAudit({
+      orgId: ctx.orgId,
+      userId: ctx.user.id,
+      action: "document.deleted",
+      resourceType: "document",
+      resourceId: doc.id,
+      before: doc,
+    })
     return { doc }
   })
