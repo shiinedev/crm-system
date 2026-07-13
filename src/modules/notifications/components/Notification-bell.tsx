@@ -29,16 +29,33 @@ const TYPE_ICONS: Record<string, React.ElementType> = {
     system: Bell,
 }
 
+/** Resolve where a notification should navigate to from its metadata */
+function getNotificationHref(notification: Notification): string | null {
+    if (!notification.metadata) return null
+    try {
+        const meta = JSON.parse(notification.metadata) as Record<string, string>
+        if (meta.dealId) return "/deals"
+        if (meta.taskId) return "/tasks"
+        if (meta.contactId) return "/contacts"
+        if (meta.workflowId) return "/automation"
+        return null
+    } catch {
+        return null
+    }
+}
+
 function NotificationItem({
     notification,
     onRead,
+    onNavigate,
 }: {
     notification: Notification
     onRead: (id: string) => void
+    onNavigate: (href: string) => void
 }) {
     const Icon = TYPE_ICONS[notification.type] ?? Bell
     const isUnread = !notification.readAt
-
+    const href = getNotificationHref(notification)
 
     return (
         <div
@@ -46,7 +63,10 @@ function NotificationItem({
                 "flex gap-3 px-4 py-3 hover:bg-muted/40 transition-colors cursor-pointer group",
                 isUnread && "bg-primary/5"
             )}
-            onClick={() => isUnread && onRead(notification.id)}
+            onClick={() => {
+                if (isUnread) onRead(notification.id)
+                if (href) onNavigate(href)
+            }}
         >
             <div className={cn(
                 "flex h-8 w-8 shrink-0 items-center justify-center rounded-full",
@@ -79,15 +99,26 @@ export function NotificationsBell() {
         { enabled: open }
     ))
 
+    // Badge count is fetched independently so it shows without opening the popover
+    const { data: unreadCount = 0, refetch: refetchCount } = useQuery(
+        trpc.notifications.unreadCount.queryOptions(undefined, {
+            refetchInterval: 60_000,
+            refetchOnWindowFocus: true,
+        })
+    )
+
     const { execute: markRead } = useAction(markNotificationReadAction, {
-        onSuccess: () => refetch(),
+        onSuccess: () => { refetch(); refetchCount() },
     })
 
     const { execute: markAllRead } = useAction(markAllNotificationsReadAction, {
-        onSuccess: () => { refetch(); router.refresh() },
+        onSuccess: () => { refetch(); refetchCount(); router.refresh() },
     })
 
-    const unreadCount = notifications.filter((n) => !n.readAt).length
+    function handleNavigate(href: string) {
+        setOpen(false)
+        router.push(href)
+    }
 
     return (
         <Popover open={open} onOpenChange={setOpen}>
@@ -126,7 +157,11 @@ export function NotificationsBell() {
                         <div>
                             {notifications.map((n, idx) => (
                                 <div key={n.id}>
-                                    <NotificationItem notification={n} onRead={(id) => markRead({ id })} />
+                                    <NotificationItem
+                                        notification={n}
+                                        onRead={(id) => markRead({ id })}
+                                        onNavigate={handleNavigate}
+                                    />
                                     {idx < notifications.length - 1 && <Separator />}
                                 </div>
                             ))}

@@ -3,6 +3,7 @@ import { createTRPCRouter, orgProcedure } from "../trpc"
 import {
     getNotificationsByUser,
     getUnreadNotifications,
+    getUnreadNotificationCount,
 } from "@/db/queries/notifications.queries"
 
 export const notificationsRouter = createTRPCRouter({
@@ -14,5 +15,9 @@ export const notificationsRouter = createTRPCRouter({
 
     unread: orgProcedure.query(({ ctx }) => {
         return getUnreadNotifications(ctx.user.id, ctx.orgId)
+    }),
+
+    unreadCount: orgProcedure.query(({ ctx }) => {
+        return getUnreadNotificationCount(ctx.user.id, ctx.orgId)
     }),
 })
