@@ -20,8 +20,9 @@ import { getInitials } from "@/utils/get-initials"
 import { formatRelativeTime } from "@/utils/format-date"
 import type { Contact } from "@/db/schema"
 import { useTRPC } from "@/lib/trpc/client"
-import { useQuery } from "@tanstack/react-query"
+import { useInfiniteQuery } from "@tanstack/react-query"
 import { ContactsTableSkeleton } from "./contacts-skeleton"
+import { ConfirmDialog } from "@/components/confirm-dialog"
 
 const STATUS_COLORS: Record<string, "default" | "success" | "destructive" | "warning" | "outline"> = {
     active: "success",
@@ -32,12 +33,19 @@ const STATUS_COLORS: Record<string, "default" | "success" | "destructive" | "war
 export function ContactsTable() {
     const [formOpen, setFormOpen] = useState(false)
     const [editContact, setEditContact] = useState<Contact | undefined>()
+    const [deleteTarget, setDeleteTarget] = useState<Contact | null>(null)
 
     const { q, setFilter, contactStatus, hasActiveFilters, resetFilters } = useFilters()
 
     const trpc = useTRPC();
 
-    const { data: contacts = [], isLoading } = useQuery(trpc.contacts.list.queryOptions())
+    const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery(
+        trpc.contacts.list.infiniteQueryOptions(
+            { limit: 50 },
+            { getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined }
+        )
+    )
+    const contacts = data?.pages.flatMap((page) => page.items) ?? []
     const { execute: deleteContact } = useDeleteContact()
 
     const filtered = contacts.filter((c) => {
@@ -60,7 +68,7 @@ export function ContactsTable() {
             {/* Toolbar */}
             <div className="flex items-center justify-between gap-3 p-4 border-b flex-wrap">
                 <div className="flex items-center gap-2 flex-wrap">
-                    <div className="relative w-64">
+                    <div className="relative w-full sm:w-64">
                         <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                         <Input
                             placeholder="Search contacts..."
@@ -71,7 +79,7 @@ export function ContactsTable() {
                     </div>
                     <Select
                         value={contactStatus || "all"}
-                        onValueChange={(v) => setFilter("contactStatus", v === "all" ? null : v as any)}
+                        onValueChange={(v) => setFilter("contactStatus", v === "all" ? null : (v as typeof contactStatus))}
                     >
                         <SelectTrigger className="h-8 w-32 text-sm">
                             <SelectValue placeholder="Status" />
@@ -167,7 +175,7 @@ export function ContactsTable() {
                                     <td className="px-4 py-3">
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100">
+                                                <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 group-focus-within:opacity-100">
                                                     <MoreHorizontal className="h-3.5 w-3.5" />
                                                 </Button>
                                             </DropdownMenuTrigger>
@@ -178,7 +186,7 @@ export function ContactsTable() {
                                                 <DropdownMenuSeparator />
                                                 <DropdownMenuItem
                                                     className="text-destructive focus:text-destructive"
-                                                    onClick={() => deleteContact({ id: contact.id })}
+                                                    onClick={() => setDeleteTarget(contact)}
                                                 >
                                                     <Trash2 className="h-4 w-4" />Delete
                                                 </DropdownMenuItem>
@@ -190,9 +198,33 @@ export function ContactsTable() {
                         </tbody>
                     </table>
                 )}
+
+                {hasNextPage && (
+                    <div className="flex justify-center p-4">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => fetchNextPage()}
+                            disabled={isFetchingNextPage}
+                        >
+                            {isFetchingNextPage ? "Loading…" : "Load more"}
+                        </Button>
+                    </div>
+                )}
             </div>
 
             <ContactFormDialog open={formOpen} onOpenChange={setFormOpen} contact={editContact} />
+
+            <ConfirmDialog
+                open={!!deleteTarget}
+                onOpenChange={(open) => !open && setDeleteTarget(null)}
+                title={deleteTarget ? `Delete ${deleteTarget.firstName} ${deleteTarget.lastName}?` : "Delete contact?"}
+                description="This will remove the contact from your CRM."
+                onConfirm={() => {
+                    if (deleteTarget) deleteContact({ id: deleteTarget.id })
+                    setDeleteTarget(null)
+                }}
+            />
         </div>
     )
 }

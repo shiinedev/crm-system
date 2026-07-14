@@ -1,9 +1,18 @@
+// Intl formatters are expensive to construct — cache per options shape
+const dateFormatters = new Map<string, Intl.DateTimeFormat>()
+
 export function formatDate(
     date: Date | string | null | undefined,
     options: Intl.DateTimeFormatOptions = { month: "short", day: "numeric", year: "numeric" }
 ): string {
     if (!date) return "—"
-    return new Intl.DateTimeFormat("en-US", options).format(new Date(date))
+    const key = JSON.stringify(options)
+    let formatter = dateFormatters.get(key)
+    if (!formatter) {
+        formatter = new Intl.DateTimeFormat("en-US", options)
+        dateFormatters.set(key, formatter)
+    }
+    return formatter.format(new Date(date))
 }
 
 export function formatRelativeTime(date: Date | string | null | undefined): string {

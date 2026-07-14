@@ -19,8 +19,9 @@ import { useDeleteCompany } from "../hooks/use-company-mutations"
 import { useFilters } from "@/hooks/use-filters"
 import { stripProtocol } from "@/utils/strip-protocol"
 import type { Company } from "@/db/schema"
-import { useQuery } from '@tanstack/react-query';
-import { CompaniesTableSkeleton } from "./companies-skelton"
+import { useInfiniteQuery } from '@tanstack/react-query';
+import { CompaniesTableSkeleton } from "./companies-skeleton"
+import { ConfirmDialog } from "@/components/confirm-dialog"
 
 
 const LIFECYCLE_COLORS: Record<string, "default" | "info" | "warning" | "success" | "destructive" | "outline"> = {
@@ -34,6 +35,7 @@ const LIFECYCLE_COLORS: Record<string, "default" | "info" | "warning" | "success
 export function CompaniesTable() {
   const [formOpen, setFormOpen] = useState(false)
   const [editCompany, setEditCompany] = useState<Company | undefined>()
+  const [deleteTarget, setDeleteTarget] = useState<Company | null>(null)
 
   const trpc = useTRPC()
 
@@ -43,10 +45,14 @@ export function CompaniesTable() {
     hasActiveFilters, resetFilters,
   } = useFilters()
 
-  const { data: companies = [], isLoading } = useQuery(trpc.companies.list.queryOptions())
+  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery(
+    trpc.companies.list.infiniteQueryOptions(
+      { limit: 50 },
+      { getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined }
+    )
+  )
+  const companies = data?.pages.flatMap((page) => page.items) ?? []
   const { execute: deleteCompany } = useDeleteCompany();
-
-  console.log("Companies data:", companies);
 
   // Client-side filtering driven by URL params
   const filtered = companies.filter((c) => {
@@ -76,7 +82,7 @@ export function CompaniesTable() {
       <div className="flex items-center justify-between gap-3 p-4 border-b flex-wrap">
         <div className="flex items-center gap-2 flex-wrap">
           {/* Search */}
-          <div className="relative w-64">
+          <div className="relative w-full sm:w-64">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
             <Input
               placeholder="Search companies..."
@@ -89,7 +95,7 @@ export function CompaniesTable() {
           {/* Lifecycle filter */}
           <Select
             value={companyLifecycle || "all"}
-            onValueChange={(v) => setFilter("companyLifecycle", v === "all" ? null : v as any)}
+            onValueChange={(v) => setFilter("companyLifecycle", v === "all" ? null : (v as typeof companyLifecycle))}
           >
             <SelectTrigger className="h-8 w-36 text-sm">
               <SelectValue placeholder="Lifecycle" />
@@ -202,7 +208,7 @@ export function CompaniesTable() {
                   <td className="px-4 py-3">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100">
+                        <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 group-focus-within:opacity-100">
                           <MoreHorizontal className="h-3.5 w-3.5" />
                         </Button>
                       </DropdownMenuTrigger>
@@ -214,7 +220,7 @@ export function CompaniesTable() {
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                           className="text-destructive focus:text-destructive"
-                          onClick={() => deleteCompany({ id: company.id })}
+                          onClick={() => setDeleteTarget(company)}
                         >
                           <Trash2 className="h-4 w-4" />
                           Delete
@@ -227,12 +233,36 @@ export function CompaniesTable() {
             </tbody>
           </table>
         )}
+
+        {hasNextPage && (
+          <div className="flex justify-center p-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => fetchNextPage()}
+              disabled={isFetchingNextPage}
+            >
+              {isFetchingNextPage ? "Loading…" : "Load more"}
+            </Button>
+          </div>
+        )}
       </div>
 
       <CompanyFormDialog
         open={formOpen}
         onOpenChange={setFormOpen}
         company={editCompany}
+      />
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        title={`Delete ${deleteTarget?.name ?? "company"}?`}
+        description="This will remove the company from your CRM. Related deals, contacts, and activities keep their history."
+        onConfirm={() => {
+          if (deleteTarget) deleteCompany({ id: deleteTarget.id })
+          setDeleteTarget(null)
+        }}
       />
     </div>
   )

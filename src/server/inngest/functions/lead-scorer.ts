@@ -1,4 +1,4 @@
-import { inngest } from "../client"
+import { inngest, contactCreatedEvent } from "../client"
 import { getContactById, updateContact } from "@/db/queries/contacts.queries"
 import { getActivitiesByContact } from "@/db/queries/activities.queries"
 
@@ -17,9 +17,9 @@ function calculateLeadScore(params: {
 export const leadScorer = inngest.createFunction(
   {
     id: "lead-scorer",
-    triggers: [{ event: "crm/contact.created" }],
+    triggers: [contactCreatedEvent],
   },
-  async ({ event }: { event: { data: { contactId: string; orgId: string } } }) => {
+  async ({ event }) => {
     const { contactId, orgId } = event.data
     const contact = await getContactById(contactId, orgId)
     if (!contact) return

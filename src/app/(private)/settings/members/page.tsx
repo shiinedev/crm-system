@@ -18,11 +18,17 @@ import { getInitials } from "@/utils/get-initials"
 import { Field, FieldContent, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
 
 const schema = z.object({
-    email: z.string().email("Invalid email"),
+    email: z.email("Invalid email"),
     role: z.enum(["admin", "manager", "sales_rep", "support_agent", "viewer"]),
 })
 
 type FormValues = z.infer<typeof schema>
+
+type MemberRow = {
+    id: string
+    role: string
+    user?: { name?: string | null; email?: string | null }
+}
 
 const ROLE_COLORS: Record<string, "default" | "secondary" | "outline" | "destructive"> = {
     owner: "default",
@@ -35,34 +41,37 @@ const ROLE_COLORS: Record<string, "default" | "secondary" | "outline" | "destruc
 
 export default function MembersPage() {
     const { data: session } = useSession()
-    const [members, setMembers] = useState<any[]>([])
+    const [members, setMembers] = useState<MemberRow[]>([])
     const [loading, setLoading] = useState(true)
-    const [orgId, setOrgId] = useState<string | null>(null)
+    const orgId = session?.session?.activeOrganizationId ?? null
 
     const form = useForm<FormValues>({
         resolver: zodResolver(schema),
         defaultValues: { email: "", role: "sales_rep" },
     })
 
-    useEffect(() => {
-        loadMembers()
-    }, [session])
-
     async function loadMembers() {
-        const activeOrgId = session?.session?.activeOrganizationId
-        if (!activeOrgId) return
-        setOrgId(activeOrgId)
+        if (!orgId) return
         const res = await organization.listMembers()
-        if (res.data) setMembers((res.data as any).members ?? res.data)
+        if (res.data) {
+            const data = res.data as { members?: MemberRow[] } | MemberRow[]
+            setMembers(Array.isArray(data) ? data : (data.members ?? []))
+        }
         setLoading(false)
     }
+
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- async member fetch on mount/session change
+        loadMembers()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [session])
 
     async function onInvite(values: FormValues) {
         if (!orgId) return
         const { error } = await organization.inviteMember({
             organizationId: orgId,
             email: values.email,
-            role: values.role as any,
+            role: values.role as Parameters<typeof organization.inviteMember>[0]["role"],
         })
         if (error) {
             toast.error(error.message ?? "Failed to send invite")

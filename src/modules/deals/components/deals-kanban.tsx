@@ -2,6 +2,9 @@
 
 import { useState } from "react"
 import { Plus, Search, X } from "lucide-react"
+import { DragDropProvider, useDraggable, useDroppable, type DragEndEvent } from "@dnd-kit/react"
+import { useAction } from "next-safe-action/hooks"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -9,42 +12,104 @@ import {
 } from "@/components/ui/select"
 import { DealCard } from "./deal-card"
 import { DealFormDialog } from "./deal-form-dialog"
-import { useDeleteDeal, useChangeDealStage } from "../hooks/use-deal-mutations"
+import { useDeleteDeal } from "../hooks/use-deal-mutations"
+import { changeDealStageAction } from "@/server/actions/deals.actions"
 import { useFilters } from "@/hooks/use-filters"
 import { formatCurrency } from "@/utils/format-currency"
 import type { Deal } from "@/db/schema"
 import { useTRPC } from "@/lib/trpc/client"
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { ConfirmDialog } from "@/components/confirm-dialog"
+import { cn } from "@/lib/utils"
+import { BoardSkeleton } from "@/components/board-skeleton"
+
+function DraggableDealCard({
+    deal,
+    onEdit,
+    onDelete,
+}: {
+    deal: Deal
+    onEdit: (deal: Deal) => void
+    onDelete: () => void
+}) {
+    const { ref, isDragging } = useDraggable({ id: deal.id })
+    return (
+        <div ref={ref} className={cn("touch-none", isDragging && "cursor-grabbing")}>
+            <DealCard deal={deal} onEdit={onEdit} onDelete={onDelete} />
+        </div>
+    )
+}
+
+function DroppableStageColumn({ id, children }: { id: string; children: React.ReactNode }) {
+    const { ref, isDropTarget } = useDroppable({ id })
+    return (
+        <div
+            ref={ref}
+            className={cn(
+                "flex flex-col gap-2 p-2 flex-1 overflow-y-auto min-h-[120px] transition-colors",
+                isDropTarget && "bg-primary/5 ring-1 ring-inset ring-primary/20 rounded-lg"
+            )}
+        >
+            {children}
+        </div>
+    )
+}
 
 export function DealsKanban() {
     const [formOpen, setFormOpen] = useState(false)
     const [editDeal, setEditDeal] = useState<Deal | undefined>()
     const [addingToStageId, setAddingToStageId] = useState<string | undefined>()
+    const [deleteTarget, setDeleteTarget] = useState<Deal | null>(null)
+    // Optimistic stage overrides so a dropped card moves immediately
+    const [optimistic, setOptimistic] = useState<Record<string, string>>({})
 
     const trpc = useTRPC()
+    const queryClient = useQueryClient()
 
     const { q, setFilter, dealPipelineId, dealPriority, hasActiveFilters, resetFilters } = useFilters()
 
-  const { data: pipelines = [] } = useQuery(trpc.pipelines.list.queryOptions())
-  console.log("pipelines",pipelines)
+  const { data: pipelines = [], isLoading: pipelinesLoading } = useQuery(trpc.pipelines.list.queryOptions())
     const activePipelineId = dealPipelineId || pipelines[0]?.id
 
-  const { data: pipelineData } = useQuery(trpc.pipelines.getWithStages.queryOptions(
+  const { data: pipelineData, isLoading: stagesLoading } = useQuery(trpc.pipelines.getWithStages.queryOptions(
     { id: activePipelineId },
     { enabled: !!activePipelineId }
   ));
-  console.log("withstages",pipelineData)
-    const { data: deals = [] } = useQuery(trpc.deals.byPipeline.queryOptions(
+    const { data: deals = [], isLoading: dealsLoading } = useQuery(trpc.deals.byPipeline.queryOptions(
         { pipelineId: activePipelineId },
         { enabled: !!activePipelineId }
     ))
 
+    const isLoading = pipelinesLoading || (!!activePipelineId && (stagesLoading || dealsLoading))
+
     const { execute: deleteDeal } = useDeleteDeal()
-    const { execute: changeStage } = useChangeDealStage()
+
+    const { execute: changeStage } = useAction(changeDealStageAction, {
+        onSuccess: async ({ input }) => {
+            await queryClient.invalidateQueries({ queryKey: trpc.deals.byPipeline.queryKey() })
+            setOptimistic((prev) => {
+                const next = { ...prev }
+                if (input.id) delete next[input.id]
+                return next
+            })
+        },
+        onError: ({ error, input }) => {
+            toast.error(error.serverError ?? "Failed to move deal")
+            setOptimistic((prev) => {
+                const next = { ...prev }
+                if (input.id) delete next[input.id]
+                return next
+            })
+        },
+    })
 
     const stages = pipelineData?.stages ?? []
 
-    const filteredDeals = deals.filter((d) => {
+    const withOptimistic = deals.map((d) =>
+        optimistic[d.id] ? { ...d, stageId: optimistic[d.id] } : d
+    )
+
+    const filteredDeals = withOptimistic.filter((d) => {
         const matchesQ = !q || d.title.toLowerCase().includes(q.toLowerCase())
         const matchesPriority = !dealPriority || d.priority === dealPriority
         return matchesQ && matchesPriority
@@ -59,21 +124,16 @@ export function DealsKanban() {
             .reduce((sum, d) => sum + Number(d.value ?? 0), 0)
     }
 
-    function handleDragStart(e: React.DragEvent, dealId: string) {
-        e.dataTransfer.setData("dealId", dealId)
-    }
-
-    function handleDrop(e: React.DragEvent, stageId: string) {
-        e.preventDefault()
-        const dealId = e.dataTransfer.getData("dealId")
+    function handleDragEnd(event: DragEndEvent) {
+        if (event.canceled) return
+        const stageId = event.operation.target?.id
+        const dealId = event.operation.source?.id
+        if (!stageId || !stages.some((s) => s.id === stageId)) return
         const deal = deals.find((d) => d.id === dealId)
         if (deal && deal.stageId !== stageId) {
-            changeStage({ id: dealId, stageId })
+            setOptimistic((prev) => ({ ...prev, [deal.id]: String(stageId) }))
+            changeStage({ id: deal.id, stageId: String(stageId) })
         }
-    }
-
-    function handleDragOver(e: React.DragEvent) {
-        e.preventDefault()
     }
 
     function handleEdit(deal: Deal) {
@@ -108,7 +168,7 @@ export function DealsKanban() {
                         </SelectContent>
                     </Select>
 
-                    <div className="relative w-56">
+                    <div className="relative w-full sm:w-56">
                         <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                         <Input
                             placeholder="Search deals..."
@@ -120,7 +180,7 @@ export function DealsKanban() {
 
                     <Select
                         value={dealPriority || "all"}
-                        onValueChange={(v) => setFilter("dealPriority", v === "all" ? null : v as any)}
+                        onValueChange={(v) => setFilter("dealPriority", v === "all" ? null : (v as typeof dealPriority))}
                     >
                         <SelectTrigger className="h-8 w-32 text-sm">
                             <SelectValue placeholder="Priority" />
@@ -147,6 +207,10 @@ export function DealsKanban() {
 
             {/* Kanban board */}
             <div className="flex-1 overflow-x-auto">
+                {isLoading ? (
+                    <BoardSkeleton columns={4} />
+                ) : (
+                <DragDropProvider onDragEnd={handleDragEnd}>
                 <div className="flex h-full gap-3 p-4 min-w-max">
                     {stages.map((stage) => {
                         const stageDeals = getDealsByStage(stage.id)
@@ -156,8 +220,6 @@ export function DealsKanban() {
                             <div
                                 key={stage.id}
                                 className="flex flex-col w-72 shrink-0 rounded-xl bg-muted/40 border"
-                                onDrop={(e) => handleDrop(e, stage.id)}
-                                onDragOver={handleDragOver}
                             >
                                 {/* Stage header */}
                                 <div className="flex items-center justify-between px-3 py-2.5 border-b">
@@ -178,21 +240,16 @@ export function DealsKanban() {
                                 </div>
 
                                 {/* Deal cards */}
-                                <div className="flex flex-col gap-2 p-2 flex-1 overflow-y-auto min-h-[120px]">
+                                <DroppableStageColumn id={stage.id}>
                                     {stageDeals.map((deal) => (
-                                        <div
+                                        <DraggableDealCard
                                             key={deal.id}
-                                            draggable
-                                            onDragStart={(e) => handleDragStart(e, deal.id)}
-                                        >
-                                            <DealCard
-                                                deal={deal}
-                                                onEdit={handleEdit}
-                                                onDelete={(id) => deleteDeal({ id })}
-                                            />
-                                        </div>
+                                            deal={deal}
+                                            onEdit={handleEdit}
+                                            onDelete={() => setDeleteTarget(deal)}
+                                        />
                                     ))}
-                                </div>
+                                </DroppableStageColumn>
 
                                 {/* Add deal to stage */}
                                 <div className="p-2 border-t">
@@ -217,6 +274,8 @@ export function DealsKanban() {
                         </div>
                     )}
                 </div>
+                </DragDropProvider>
+                )}
             </div>
 
             <DealFormDialog
@@ -225,6 +284,17 @@ export function DealsKanban() {
                 deal={editDeal}
                 defaultPipelineId={activePipelineId}
                 defaultStageId={addingToStageId}
+            />
+
+            <ConfirmDialog
+                open={!!deleteTarget}
+                onOpenChange={(open) => !open && setDeleteTarget(null)}
+                title={`Delete ${deleteTarget?.title ?? "deal"}?`}
+                description="This will remove the deal from the pipeline."
+                onConfirm={() => {
+                    if (deleteTarget) deleteDeal({ id: deleteTarget.id })
+                    setDeleteTarget(null)
+                }}
             />
         </div>
     )

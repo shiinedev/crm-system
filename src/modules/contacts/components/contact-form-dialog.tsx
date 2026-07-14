@@ -24,7 +24,7 @@ import { Loader2 } from "lucide-react"
 const schema = z.object({
     firstName: z.string().min(1, "First name is required"),
     lastName: z.string().min(1, "Last name is required"),
-    email: z.string().email("Invalid email").optional().or(z.literal("")),
+    email: z.email("Invalid email").optional().or(z.literal("")),
     phone: z.string().optional(),
     title: z.string().optional(),
     department: z.string().optional(),
@@ -78,12 +78,12 @@ export function ContactFormDialog({ open, onOpenChange, contact, companyId }: Co
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-lg">
+            <DialogContent className="max-w-lg max-h-[90dvh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>{isEdit ? "Edit contact" : "Add contact"}</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                    <FieldGroup className="grid grid-cols-2 gap-3">
+                    <FieldGroup className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <Controller control={form.control} name="firstName" render={({ field, fieldState }) => (
                             <Field data-invalid={fieldState.error}>
                                 <FieldLabel>First name *</FieldLabel>
@@ -162,7 +162,7 @@ export function ContactFormDialog({ open, onOpenChange, contact, companyId }: Co
                             </Field>
                         )} />
                         <Controller control={form.control} name="notes" render={({ field, fieldState }) => (
-                            <Field className="col-span-2" data-invalid={fieldState.error}>
+                            <Field className="sm:col-span-2" data-invalid={fieldState.error}>
                                 <FieldLabel>Notes</FieldLabel>
                                 <FieldContent>
                                     <Textarea placeholder="Any additional notes..." {...field} data-invalid={fieldState.error} />

@@ -3,8 +3,8 @@ import { z } from "zod";
 export const createCompanySchema = z.object({
     name: z.string().min(1, "Name is required"),
     slug: z.string().min(1, "Slug is required"),
-    website: z.string().url("Invalid URL").optional().or(z.literal("")),
-    linkedinUrl: z.string().url("Invalid URL").optional().or(z.literal("")),
+    website: z.url("Invalid URL").optional().or(z.literal("")),
+    linkedinUrl: z.url("Invalid URL").optional().or(z.literal("")),
     industry: z.string().optional(),
     companySize: z.string().optional(),
     annualRevenue: z.string().optional(),

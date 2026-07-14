@@ -17,8 +17,10 @@ import { createTaskSchema } from "@/lib/validations/tasks";
 
 
 export const tasksRouter = createTRPCRouter({
+    // Kanban board needs all columns populated, so no cursor pagination —
+    // but cap the result set as a guardrail against unbounded orgs.
     list: orgProcedure.query(({ ctx }) => {
-        return getTasksByOrg(ctx.orgId);
+        return getTasksByOrg(ctx.orgId, { limit: 500 });
     }),
 
     mine: orgProcedure.query(({ ctx }) => {

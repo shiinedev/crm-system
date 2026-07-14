@@ -4,7 +4,7 @@ import { searchCompanies } from "@/db/queries/companies.queries"
 import { searchContacts } from "@/db/queries/contacts.queries"
 import { searchDeals } from "@/db/queries/deals.queries"
 import { searchDocuments } from "@/db/queries/documents.queries"
-import { cacheGet, cacheSet } from "@/server/cache/reddis"
+import { cacheGet, cacheSet } from "@/server/cache/redis"
 import { cacheKeys } from "@/server/cache/keys"
 
 export const searchRouter = createTRPCRouter({

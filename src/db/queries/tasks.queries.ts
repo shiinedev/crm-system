@@ -1,14 +1,23 @@
 import "server-only";
-import { eq, and, isNull, desc, lte } from "drizzle-orm";
+import { eq, and, isNull, desc, lte, notInArray, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { tasks, type NewTask } from "@/db/schema";
+import { afterCursor, type PageOpts } from "./pagination";
 
-export async function getTasksByOrg(organizationId: string) {
-    return db
+export async function getTasksByOrg(organizationId: string, opts?: PageOpts) {
+    const query = db
         .select()
         .from(tasks)
-        .where(and(eq(tasks.organizationId, organizationId), isNull(tasks.deletedAt)))
-        .orderBy(desc(tasks.createdAt));
+        .where(
+            and(
+                eq(tasks.organizationId, organizationId),
+                isNull(tasks.deletedAt),
+                afterCursor(tasks.createdAt, tasks.id, opts?.cursor)
+            )
+        )
+        .orderBy(desc(tasks.createdAt), desc(tasks.id))
+        .$dynamic();
+    return opts?.limit ? query.limit(opts.limit) : query;
 }
 
 export async function getTasksByAssignee(
@@ -113,6 +122,24 @@ export async function softDeleteTask(id: string, organizationId: string) {
         .where(and(eq(tasks.id, id), eq(tasks.organizationId, organizationId)))
         .returning();
     return task ?? null;
+}
+
+/**
+ * Cross-org scan used by the task-due cron: open tasks whose reminder time
+ * (reminderAt, falling back to dueDate) falls inside the given window.
+ */
+export async function getTasksDueBetween(start: Date, end: Date) {
+    return db
+        .select()
+        .from(tasks)
+        .where(
+            and(
+                isNull(tasks.deletedAt),
+                notInArray(tasks.status, ["done", "cancelled"]),
+                sql`coalesce(${tasks.reminderAt}, ${tasks.dueDate}) > ${start}`,
+                sql`coalesce(${tasks.reminderAt}, ${tasks.dueDate}) <= ${end}`
+            )
+        );
 }
 
 export async function getTasksByContact(contactId: string, organizationId: string) {

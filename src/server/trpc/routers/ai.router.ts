@@ -7,7 +7,7 @@ import { updateContact } from "@/db/queries/contacts.queries"
 import { updateDeal } from "@/db/queries/deals.queries"
 import { updateCompany } from "@/db/queries/companies.queries"
 import { TRPCError } from "@trpc/server"
-import { generateAiText } from "@/server/ai/agent/generrate-text"
+import { generateAiText } from "@/server/ai/agent/generate-text"
 
 export const aiRouter = createTRPCRouter({
   generateEmail: orgProcedure

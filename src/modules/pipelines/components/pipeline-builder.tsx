@@ -28,6 +28,8 @@ import {
 } from "@/server/actions/pipeline.actions"
 import { useQuery } from "@tanstack/react-query"
 import { Pipeline } from "@/db/schema"
+import { ConfirmDialog } from "@/components/confirm-dialog"
+import { Skeleton } from "@/components/ui/skeleton"
 
 const pipelineSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -47,8 +49,9 @@ export function PipelineBuilder() {
   const trpc = useTRPC()
   const [newPipelineOpen, setNewPipelineOpen] = useState(false)
   const [addingStageToId, setAddingStageToId] = useState<string | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<{ type: "pipeline" | "stage"; id: string } | null>(null)
 
-  const { data: pipelines = [], refetch } = useQuery(trpc.pipelines.list.queryOptions())
+  const { data: pipelines = [], refetch, isLoading } = useQuery(trpc.pipelines.list.queryOptions())
 
   const { execute: createPipeline, isPending: isCreatingPipeline } = useAction(createPipelineAction, {
     onSuccess: () => { toast.success("Pipeline created"); refetch(); setNewPipelineOpen(false) },
@@ -109,7 +112,22 @@ export function PipelineBuilder() {
         </Button>
       </div>
 
-      {pipelines.length === 0 ? (
+      {isLoading ? (
+        <div className="space-y-4">
+          {[...Array(2)].map((_, i) => (
+            <Card key={i}>
+              <CardHeader className="pb-3">
+                <Skeleton className="h-5 w-40" />
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <Skeleton className="h-9 w-full" />
+                <Skeleton className="h-9 w-full" />
+                <Skeleton className="h-9 w-2/3" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : pipelines.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-10 gap-2">
             <p className="text-sm text-muted-foreground">No pipelines yet.</p>
@@ -129,8 +147,8 @@ export function PipelineBuilder() {
               stageForm={stageForm}
               isCreatingStage={isCreatingStage}
               onAddStage={onAddStage}
-              onDeleteStage={(id: string) => deleteStage({ id })}
-              onDeletePipeline={(id: string) => deletePipeline({ id })}
+              onDeleteStage={(id: string) => setDeleteTarget({ type: "stage", id })}
+              onDeletePipeline={(id: string) => setDeleteTarget({ type: "pipeline", id })}
             />
           ))}
         </div>
@@ -161,6 +179,23 @@ export function PipelineBuilder() {
             </form>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        title={deleteTarget?.type === "pipeline" ? "Delete this pipeline?" : "Remove this stage?"}
+        description={
+          deleteTarget?.type === "pipeline"
+            ? "Deals in this pipeline will lose their pipeline assignment."
+            : "Deals in this stage will need to be moved to another stage."
+        }
+        confirmLabel={deleteTarget?.type === "pipeline" ? "Delete pipeline" : "Remove stage"}
+        onConfirm={() => {
+          if (deleteTarget?.type === "pipeline") deletePipeline({ id: deleteTarget.id })
+          if (deleteTarget?.type === "stage") deleteStage({ id: deleteTarget.id })
+          setDeleteTarget(null)
+        }}
+      />
     </div>
   )
 }
@@ -175,7 +210,7 @@ type PipelineCardProps = {
   stageForm:UseFormReturn<{
       name: string;
       probability?: string | undefined;
-  }, any, {
+  }, unknown, {
       name: string;
       probability?: string | undefined;
   }>
@@ -227,7 +262,7 @@ function PipelineCard({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-6 w-6 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive"
+                className="h-6 w-6 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 group-focus-within:opacity-100 text-muted-foreground hover:text-destructive"
                 onClick={() => onDeleteStage(stage.id as string)}
               >
                 <Trash2 className="h-3 w-3" />

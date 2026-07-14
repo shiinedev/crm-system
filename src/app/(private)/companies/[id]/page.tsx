@@ -1,17 +1,18 @@
+import { Suspense } from "react"
 import { notFound } from "next/navigation"
 import { getSessionWithOrg } from "@/utils/get-session"
 import { getCompanyById } from "@/db/queries/companies.queries"
 import { getActivitiesByCompany } from "@/db/queries/activities.queries"
 import { getContactsByCompany } from "@/db/queries/contacts.queries"
 import { getDealsByCompany } from "@/db/queries/deals.queries"
-import { CompanyDetailClient } from "@/modules/companies/components/compnay-details"
+import { CompanyDetailClient } from "@/modules/companies/components/company-details"
+import { CompanyDetailsSkeleton } from "@/modules/companies/components/company-details-skeleton"
 
 interface Props {
     params: Promise<{ id: string }>
 }
 
-export default async function CompanyDetailPage({ params }: Props) {
-    const { id } = await params
+async function CompanyDetailContent({ id }: { id: string }) {
     const { orgId } = await getSessionWithOrg()
 
     const [company, activities, contacts, deals] = await Promise.all([
@@ -30,5 +31,15 @@ export default async function CompanyDetailPage({ params }: Props) {
             contacts={contacts}
             deals={deals}
         />
+    )
+}
+
+export default async function CompanyDetailPage({ params }: Props) {
+    const { id } = await params
+
+    return (
+        <Suspense fallback={<CompanyDetailsSkeleton />}>
+            <CompanyDetailContent id={id} />
+        </Suspense>
     )
 }

@@ -15,15 +15,24 @@ import { useFilters } from "@/hooks/use-filters"
 import { formatRelativeTime } from "@/utils/format-date"
 import type { Document } from "@/db/schema"
 import Link from "next/link"
-import { useQuery } from "@tanstack/react-query"
+import { useInfiniteQuery } from "@tanstack/react-query"
+import { ConfirmDialog } from "@/components/confirm-dialog"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export function DocumentsList() {
   const [formOpen, setFormOpen] = useState(false)
   const [editDoc, setEditDoc] = useState<Document | undefined>()
+  const [deleteTarget, setDeleteTarget] = useState<Document | null>(null)
   const { q, setFilter, hasActiveFilters, resetFilters } = useFilters()
   const trpc = useTRPC()
 
-  const { data: documents = [], isLoading } = useQuery(trpc.documents.list.queryOptions())
+  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery(
+    trpc.documents.list.infiniteQueryOptions(
+      { limit: 50 },
+      { getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined }
+    )
+  )
+  const documents = data?.pages.flatMap((page) => page.items) ?? []
   const { execute: deleteDocument } = useDeleteDocument()
 
   const filtered = documents.filter((d) =>
@@ -40,7 +49,7 @@ export function DocumentsList() {
       {/* Toolbar */}
       <div className="flex items-center justify-between gap-3 p-4 border-b">
         <div className="flex items-center gap-2">
-          <div className="relative w-64">
+          <div className="relative w-full sm:w-64">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
             <Input
               placeholder="Search documents..."
@@ -63,7 +72,20 @@ export function DocumentsList() {
       {/* List */}
       <div className="flex-1 overflow-auto p-4">
         {isLoading ? (
-          <div className="flex items-center justify-center h-40 text-sm text-muted-foreground">Loading...</div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="rounded-xl border bg-card p-4">
+                <div className="flex items-start gap-3">
+                  <Skeleton className="h-5 w-5 rounded" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-4 w-2/3" />
+                    <Skeleton className="h-3 w-full" />
+                    <Skeleton className="h-3 w-20" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-40 gap-2">
             <FileText className="h-8 w-8 text-muted-foreground/40" />
@@ -105,7 +127,7 @@ export function DocumentsList() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-7 w-7 opacity-0 group-hover:opacity-100"
+                        className="h-7 w-7 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 group-focus-within:opacity-100"
                         onClick={(e) => e.preventDefault()}
                       >
                         <MoreHorizontal className="h-3.5 w-3.5" />
@@ -118,7 +140,7 @@ export function DocumentsList() {
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         className="text-destructive focus:text-destructive"
-                        onClick={() => deleteDocument({ id: doc.id })}
+                        onClick={() => setDeleteTarget(doc)}
                       >
                         <Trash2 className="h-4 w-4" />Delete
                       </DropdownMenuItem>
@@ -129,9 +151,33 @@ export function DocumentsList() {
             ))}
           </div>
         )}
+
+        {hasNextPage && (
+          <div className="flex justify-center p-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => fetchNextPage()}
+              disabled={isFetchingNextPage}
+            >
+              {isFetchingNextPage ? "Loading…" : "Load more"}
+            </Button>
+          </div>
+        )}
       </div>
 
       <DocumentFormDialog open={formOpen} onOpenChange={setFormOpen} document={editDoc} />
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        title={`Delete ${deleteTarget?.title ?? "document"}?`}
+        description="This will remove the document."
+        onConfirm={() => {
+          if (deleteTarget) deleteDocument({ id: deleteTarget.id })
+          setDeleteTarget(null)
+        }}
+      />
     </div>
   )
 }

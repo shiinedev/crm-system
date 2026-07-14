@@ -12,13 +12,22 @@ import {
     getContactCount,
 } from "@/db/queries/contacts.queries";
 import { createContactSchema, updateContactSchema } from "@/lib/validations/contacts";
+import { toPage } from "@/db/queries/pagination";
+import { listInputSchema, DEFAULT_PAGE_SIZE } from "./list-input";
 
 
 
 export const contactsRouter = createTRPCRouter({
-    list: orgProcedure.query(({ ctx }) => {
-        return getContactsByOrg(ctx.orgId);
-    }),
+    list: orgProcedure
+        .input(listInputSchema)
+        .query(async ({ ctx, input }) => {
+            const limit = input?.limit ?? DEFAULT_PAGE_SIZE;
+            const rows = await getContactsByOrg(ctx.orgId, {
+                limit: limit + 1,
+                cursor: input?.cursor ?? undefined,
+            });
+            return toPage(rows, limit);
+        }),
 
     byCompany: orgProcedure
         .input(z.object({ companyId: z.string() }))

@@ -62,8 +62,8 @@ export function useFilters() {
         })
     }
 
-    // Reset page to 1 on any filter change
-    function setFilter(key: FilterKey, value: FilterValue) {
+    // Reset page to 1 on any filter change (null clears the filter)
+    function setFilter<K extends FilterKey>(key: K, value: FilterState[K] | null) {
         void (setters as FilterSetters)({ [key]: value, page: 1 } as Partial<FilterState>)
     }
 

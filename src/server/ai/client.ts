@@ -9,4 +9,4 @@ export const openRouter = createOpenRouter({
     compatibility: "strict"
 })
 export const MODEL = "nex-agi/nex-n2-pro:free" as const
-export const EMPPED_MODEL = "nvidia/llama-nemotron-embed-vl-1b-v2:free" as const
+export const EMBED_MODEL = "nvidia/llama-nemotron-embed-vl-1b-v2:free" as const

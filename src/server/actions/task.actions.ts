@@ -10,6 +10,7 @@ import {
 import { createNotification } from "@/db/queries/notifications.queries";
 import { createActivity } from "@/db/queries/activities.queries";
 import { createTaskSchema, updateTaskSchema } from "@/lib/validations/tasks";
+import { logAudit } from "@/server/audit";
 
 
 
@@ -51,6 +52,15 @@ export const createTaskAction = orgActionClient
             });
         }
 
+        await logAudit({
+            orgId: ctx.orgId,
+            userId: ctx.user.id,
+            action: "task.created",
+            resourceType: "task",
+            resourceId: task.id,
+            after: task,
+        });
+
         return { task };
     });
 
@@ -90,6 +100,15 @@ export const updateTaskAction = orgActionClient
             });
         }
 
+        await logAudit({
+            orgId: ctx.orgId,
+            userId: ctx.user.id,
+            action: "task.updated",
+            resourceType: "task",
+            resourceId: task.id,
+            after: data,
+        });
+
         return { task };
     });
 
@@ -98,5 +117,13 @@ export const deleteTaskAction = orgActionClient
     .action(async ({ parsedInput, ctx }) => {
         const task = await softDeleteTask(parsedInput.id, ctx.orgId);
         if (!task) throw new ActionError("Task not found.");
+        await logAudit({
+            orgId: ctx.orgId,
+            userId: ctx.user.id,
+            action: "task.deleted",
+            resourceType: "task",
+            resourceId: task.id,
+            before: task,
+        });
         return { task };
     });

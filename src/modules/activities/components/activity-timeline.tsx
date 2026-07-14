@@ -1,7 +1,9 @@
 "use client"
 
+import { useState } from "react"
 import { Phone, Mail, Calendar, FileText, CheckSquare, ArrowRight, Upload, MessageSquare, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { ConfirmDialog } from "@/components/confirm-dialog"
 import { useDeleteActivity } from "../hooks/use-activity-mutations"
 import { formatRelativeTime } from "@/utils/format-date"
 import type { Activity } from "@/db/schema"
@@ -24,6 +26,7 @@ interface ActivityTimelineProps {
 
 export function ActivityTimeline({ activities, isLoading }: ActivityTimelineProps) {
     const { execute: deleteActivity } = useDeleteActivity()
+    const [deleteTarget, setDeleteTarget] = useState<Activity | null>(null)
 
     if (isLoading) {
         return (
@@ -81,8 +84,8 @@ export function ActivityTimeline({ activities, isLoading }: ActivityTimelineProp
                                         <Button
                                             variant="ghost"
                                             size="icon"
-                                            className="h-6 w-6 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive"
-                                            onClick={() => deleteActivity({ id: activity.id })}
+                                            className="h-6 w-6 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 group-focus-within:opacity-100 text-muted-foreground hover:text-destructive"
+                                            onClick={() => setDeleteTarget(activity)}
                                         >
                                             <Trash2 className="h-3 w-3" />
                                         </Button>
@@ -96,6 +99,17 @@ export function ActivityTimeline({ activities, isLoading }: ActivityTimelineProp
                     )
                 })}
             </div>
+
+            <ConfirmDialog
+                open={!!deleteTarget}
+                onOpenChange={(open) => !open && setDeleteTarget(null)}
+                title="Delete this activity?"
+                description="This will remove the entry from the timeline."
+                onConfirm={() => {
+                    if (deleteTarget) deleteActivity({ id: deleteTarget.id })
+                    setDeleteTarget(null)
+                }}
+            />
         </div>
     )
 }

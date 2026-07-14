@@ -39,14 +39,16 @@ export default function LoginPage() {
     })
     setIsPending(false)
     if (error) {
-      toast.error(error.message ?? "Invalid credentials")
+      if (error.status === 403) {
+        // Unverified email — better-auth blocks sign-in until verified
+        toast.info("Please verify your email first. Check your inbox for the link.")
+        router.push(`/verify-email?pending=1&email=${encodeURIComponent(values.email)}`)
+      } else {
+        toast.error(error.message ?? "Invalid credentials")
+      }
     } else {
       router.push("/dashboard")
     }
-  }
-
-  async function handleGoogleSignIn() {
-    await signIn.social({ provider: "google", callbackURL: "/dashboard" })
   }
 
   return (
@@ -72,7 +74,15 @@ export default function LoginPage() {
             )}
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="password">Password</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="password">Password</Label>
+              <Link
+                href="/forgot-password"
+                className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+              >
+                Forgot password?
+              </Link>
+            </div>
             <Input id="password" type="password" placeholder="••••••••" {...form.register("password")} />
             {form.formState.errors.password && (
               <p className="text-xs text-destructive">{form.formState.errors.password.message}</p>
@@ -82,19 +92,6 @@ export default function LoginPage() {
             {isPending ? "Signing in..." : "Sign in"}
           </Button>
         </form>
-
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-card px-2 text-muted-foreground">or</span>
-          </div>
-        </div>
-
-        <Button variant="outline" className="w-full" onClick={handleGoogleSignIn}>
-          Continue with Google
-        </Button>
 
         <p className="text-center text-xs text-muted-foreground">
           Don&apos;t have an account?{" "}

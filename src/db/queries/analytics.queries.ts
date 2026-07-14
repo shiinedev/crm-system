@@ -2,6 +2,8 @@ import "server-only";
 import { eq, and, isNull, gte, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { deals, companies, contacts, tasks } from "@/db/schema";
+import { cacheGet, cacheSet } from "@/server/cache/redis";
+import { cacheKeys } from "@/server/cache/keys";
 
 export async function getRevenueByMonth(
     organizationId: string,
@@ -49,55 +51,69 @@ export async function getPipelineHealthByStage(
         .groupBy(deals.stageId);
 }
 
-export async function getDashboardSummary(organizationId: string) {
-    const [companiesCount] = await db
-        .select({ count: sql<number>`count(*)::int` })
-        .from(companies)
-        .where(
-            and(
-                eq(companies.organizationId, organizationId),
-                isNull(companies.deletedAt)
-            )
-        );
+export type DashboardSummary = {
+    companies: number;
+    contacts: number;
+    deals: number;
+    dealValue: number;
+    openTasks: number;
+};
 
-    const [contactsCount] = await db
-        .select({ count: sql<number>`count(*)::int` })
-        .from(contacts)
-        .where(
-            and(
-                eq(contacts.organizationId, organizationId),
-                isNull(contacts.deletedAt)
-            )
-        );
+export async function getDashboardSummary(organizationId: string): Promise<DashboardSummary> {
+    const cacheKey = cacheKeys.dashboardSummary(organizationId);
+    const cached = await cacheGet<DashboardSummary>(cacheKey);
+    if (cached) return cached;
 
-    const [dealStats] = await db
-        .select({
-            count: sql<number>`count(*)::int`,
-            totalValue: sql<number>`coalesce(sum(${deals.value}::numeric), 0)`,
-        })
-        .from(deals)
-        .where(
-            and(eq(deals.organizationId, organizationId), isNull(deals.deletedAt))
-        );
+    const [[companiesCount], [contactsCount], [dealStats], [openTasks]] = await Promise.all([
+        db
+            .select({ count: sql<number>`count(*)::int` })
+            .from(companies)
+            .where(
+                and(
+                    eq(companies.organizationId, organizationId),
+                    isNull(companies.deletedAt)
+                )
+            ),
+        db
+            .select({ count: sql<number>`count(*)::int` })
+            .from(contacts)
+            .where(
+                and(
+                    eq(contacts.organizationId, organizationId),
+                    isNull(contacts.deletedAt)
+                )
+            ),
+        db
+            .select({
+                count: sql<number>`count(*)::int`,
+                totalValue: sql<number>`coalesce(sum(${deals.value}::numeric), 0)`,
+            })
+            .from(deals)
+            .where(
+                and(eq(deals.organizationId, organizationId), isNull(deals.deletedAt))
+            ),
+        db
+            .select({ count: sql<number>`count(*)::int` })
+            .from(tasks)
+            .where(
+                and(
+                    eq(tasks.organizationId, organizationId),
+                    isNull(tasks.deletedAt),
+                    eq(tasks.status, "todo")
+                )
+            ),
+    ]);
 
-    const [openTasks] = await db
-        .select({ count: sql<number>`count(*)::int` })
-        .from(tasks)
-        .where(
-            and(
-                eq(tasks.organizationId, organizationId),
-                isNull(tasks.deletedAt),
-                eq(tasks.status, "todo")
-            )
-        );
-
-    return {
+    const summary: DashboardSummary = {
         companies: companiesCount?.count ?? 0,
         contacts: contactsCount?.count ?? 0,
         deals: dealStats?.count ?? 0,
         dealValue: dealStats?.totalValue ?? 0,
         openTasks: openTasks?.count ?? 0,
     };
+
+    await cacheSet(cacheKey, summary, 60);
+    return summary;
 }
 
 export async function getWinLossStats(organizationId: string) {
