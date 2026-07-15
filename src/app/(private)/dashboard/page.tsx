@@ -1,15 +1,32 @@
 import { Suspense } from "react"
+import { and, eq } from "drizzle-orm"
 import { getSessionWithOrg } from "@/utils/get-session"
+import { db } from "@/db"
+import { members } from "@/db/schema"
 import { getDashboardSummary } from "@/db/queries/analytics.queries"
 import { Building2, Users, TrendingUp, CheckSquare } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { formatCurrency } from "@/utils/format-currency"
+import { formatDate } from "@/utils/format-date"
+import { canViewAnalytics } from "@/lib/roles"
+import type { OrgRole } from "@/lib/permissions"
+import { MyTasksWidget } from "@/modules/dashboard/components/my-tasks-widget"
+import { RecentActivityWidget } from "@/modules/dashboard/components/recent-activity-widget"
+import { RevenueChart } from "@/modules/analytics/components/revenue-chart"
+import { PipelineHealthChart } from "@/modules/analytics/components/pipeline-health"
 import type { Metadata } from "next"
 
 export const metadata: Metadata = { title: "Dashboard" }
 
 const STAT_ICONS = [Building2, Users, TrendingUp, CheckSquare]
+
+function greeting(): string {
+  const hour = new Date().getHours()
+  if (hour < 12) return "Good morning"
+  if (hour < 18) return "Good afternoon"
+  return "Good evening"
+}
 
 function StatsSkeleton() {
   return (
@@ -63,16 +80,39 @@ async function DashboardStats({ orgId }: { orgId: string }) {
 export default async function DashboardPage() {
   const { user, orgId } = await getSessionWithOrg()
 
+  // Role determines whether the analytics widgets are shown (manager+).
+  const [member] = await db
+    .select({ role: members.role })
+    .from(members)
+    .where(and(eq(members.userId, user.id), eq(members.organizationId, orgId)))
+    .limit(1)
+  const role = member?.role as OrgRole | undefined
+  const showAnalytics = role ? canViewAnalytics(role) : false
+
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6 p-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
-        <p className="text-sm text-muted-foreground mt-1">Welcome back, {user.name}</p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {greeting()}, {user.name} · {formatDate(new Date(), { weekday: "long", month: "long", day: "numeric" })}
+        </p>
       </div>
 
       <Suspense fallback={<StatsSkeleton />}>
         <DashboardStats orgId={orgId} />
       </Suspense>
+
+      {showAnalytics && (
+        <div className="grid gap-4 lg:grid-cols-2">
+          <RevenueChart />
+          <PipelineHealthChart />
+        </div>
+      )}
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <MyTasksWidget />
+        <RecentActivityWidget />
+      </div>
     </div>
   )
 }
