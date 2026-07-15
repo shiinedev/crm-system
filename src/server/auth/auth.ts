@@ -4,7 +4,7 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { organization } from "better-auth/plugins";
 import { db } from "@/db";
 import * as schema from "@/db/schema";
-import { ac, roles } from "@/lib/permissions";
+import { ac, roles, ROLE_LABELS, type OrgRole } from "@/lib/permissions";
 import { env } from "@/lib/env";
 import { redis } from "@/server/cache/redis";
 import { sendEmail } from "@/server/email/mailer";
@@ -83,15 +83,21 @@ export const auth = betterAuth({
             roles,
             sendInvitationEmail: async (data) => {
                 const url = `${env.BETTER_AUTH_URL}/accept-invitation/${data.id}`;
-                await sendEmail({
-                    to: data.email,
-                    ...invitationEmail({
-                        inviterName: data.inviter.user.name,
-                        organizationName: data.organization.name,
-                        role: data.role,
-                        url,
-                    }),
-                });
+                try {
+                    await sendEmail({
+                        to: data.email,
+                        ...invitationEmail({
+                            inviterName: data.inviter.user.name,
+                            organizationName: data.organization.name,
+                            role: ROLE_LABELS[data.role as OrgRole] ?? data.role,
+                            url,
+                        }),
+                    });
+                } catch (err) {
+                    // Don't fail the invite just because the email couldn't be sent —
+                    // the invitation row already exists and can be resent / shared.
+                    console.error(`[invite] failed to email ${data.email}:`, err);
+                }
             },
         }),
     ],
