@@ -15,6 +15,13 @@
       "when": 1783913176429,
       "tag": "0001_yielding_gargoyle",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1784124901572,
+      "tag": "0002_ancient_black_knight",
+      "breakpoints": true
     }
   ]
 }
