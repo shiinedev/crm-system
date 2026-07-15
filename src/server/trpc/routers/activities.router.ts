@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { createTRPCRouter, orgProcedure } from "../trpc";
+import { createTRPCRouter, orgProcedure, memberProcedure } from "../trpc";
 import {
     getActivitiesByDeal,
     getActivitiesByCompany,
@@ -35,7 +35,7 @@ export const activitiesRouter = createTRPCRouter({
             return getRecentActivitiesByOrg(ctx.orgId, input.limit);
         }),
 
-    create: orgProcedure
+    create: memberProcedure
         .input(
             createActivitySchema
         )
@@ -47,7 +47,7 @@ export const activitiesRouter = createTRPCRouter({
             });
         }),
 
-    delete: orgProcedure
+    delete: memberProcedure
         .input(z.object({ id: z.string() }))
         .mutation(({ ctx, input }) => {
             return deleteActivity(input.id, ctx.orgId);

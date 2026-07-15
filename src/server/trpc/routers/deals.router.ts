@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { createTRPCRouter, orgProcedure, managerProcedure } from "../trpc";
+import { createTRPCRouter, orgProcedure, memberProcedure, managerProcedure } from "../trpc";
 import {
     getDealsByOrg,
     getDealsByPipeline,
@@ -59,13 +59,13 @@ export const dealsRouter = createTRPCRouter({
         return getDealStats(ctx.orgId);
     }),
 
-    create: orgProcedure
+    create: memberProcedure
         .input(createDealSchema)
         .mutation(({ ctx, input }) => {
             return createDeal({ ...input, organizationId: ctx.orgId });
         }),
 
-    update: orgProcedure
+    update: memberProcedure
         .input(updateDealSchema)
         .mutation(async ({ ctx, input }) => {
             const deal = await updateDeal(input.id, ctx.orgId, input);
@@ -73,7 +73,7 @@ export const dealsRouter = createTRPCRouter({
             return deal;
         }),
 
-    changeStage: orgProcedure
+    changeStage: memberProcedure
         .input(changeDealStageSchema)
         .mutation(async ({ ctx, input }) => {
             const deal = await updateDealStage(input.id, ctx.orgId, input.stageId);

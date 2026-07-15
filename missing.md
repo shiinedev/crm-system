@@ -79,19 +79,19 @@ Per `§4`: `contacts.merge`, `contacts/[id]` **detail page** (contacts have a ta
 
 ---
 
-## 3. RBAC Not Fully Enforced ⚠️
+## 3. RBAC Now Fully Enforced ✓ (resolved)
 
-The 6 roles are defined and `managerProcedure`/`adminProcedure` exist, but the `§1.3` matrix isn't fully honored:
+The 6 roles are defined and the `§1.3` matrix is now honored. Roles have a single source of truth in `src/lib/permissions.ts` (Better Auth `ac` + `roles`), mirrored by the fast synchronous helpers in `src/lib/roles.ts`.
 
 | Matrix rule | Reality |
 |---|---|
-| **viewer** cannot create/edit records | ❌ `create`/`update` use `orgProcedure` → **any member incl. viewer can create/edit** |
-| **support_agent** cannot view analytics | ❌ analytics uses `orgProcedure` → all members can view |
-| Delete requires manager+ | ✓ enforced (`managerProcedure`) |
-| Org settings / invite requires admin+ | ✓ enforced |
+| **viewer** cannot create/edit records | ✓ `create`/`update`/`delete` use `memberProcedure` (tRPC) / `memberActionClient` (actions), which exclude `viewer` |
+| **support_agent** cannot view analytics | ✓ the analytics router is entirely `managerProcedure` (manager+) |
+| Delete requires manager+ | ✓ core-record deletes use `managerProcedure`; task/activity/document deletes exclude `viewer` (`memberProcedure`) |
+| Org settings / invite requires admin+ | ✓ enforced (`adminProcedure` / `adminActionClient`) |
 | Run automation requires manager+ | ✓ enforced (`managerActionClient`) |
 
-**Fix:** introduce a `memberProcedure` that excludes `viewer` for create/edit, and gate analytics to exclude `support_agent`.
+**Resolution:** added `memberProcedure` (`src/server/trpc/trpc.ts`) and `memberActionClient` (`src/server/actions/safe-action.ts`) that exclude `viewer` for create/edit/delete; gated the analytics router to `managerProcedure`; wired Better Auth's permission engine (`ac`/`roles`) so its built-in member/invitation endpoints respect all six roles and the client can use `checkRolePermission`.
 
 ---
 

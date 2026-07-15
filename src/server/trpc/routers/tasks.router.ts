@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { createTRPCRouter, orgProcedure } from "../trpc";
+import { createTRPCRouter, orgProcedure, memberProcedure } from "../trpc";
 import {
     getTasksByOrg,
     getTasksByAssignee,
@@ -51,7 +51,7 @@ export const tasksRouter = createTRPCRouter({
             return task;
         }),
 
-    create: orgProcedure
+    create: memberProcedure
         .input(createTaskSchema)
         .mutation(({ ctx, input }) => {
             return createTask({
@@ -62,7 +62,7 @@ export const tasksRouter = createTRPCRouter({
             });
         }),
 
-    update: orgProcedure
+    update: memberProcedure
         .input(
             z.object({
                 id: z.string(),
@@ -83,7 +83,7 @@ export const tasksRouter = createTRPCRouter({
             return task;
         }),
 
-    delete: orgProcedure
+    delete: memberProcedure
         .input(z.object({ id: z.string() }))
         .mutation(async ({ ctx, input }) => {
             const task = await softDeleteTask(input.id, ctx.orgId);

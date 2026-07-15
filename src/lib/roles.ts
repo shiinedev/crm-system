@@ -1,25 +1,20 @@
 /**
- * Role definitions for the CRM.
- * These mirror the memberRoles array in auth.ts — single source of truth.
+ * Fast, synchronous role helpers for per-request gating in tRPC procedures,
+ * server actions, and client nav visibility.
+ *
+ * The canonical role definitions and Better Auth permission statements live in
+ * `@/lib/permissions`. This file mirrors that same hierarchy as cheap boolean
+ * checks so hot paths don't need an async `hasPermission` round-trip.
+ * Keep the two consistent.
  */
 
-export type OrgRole =
-    | "owner"
-    | "admin"
-    | "manager"
-    | "sales_rep"
-    | "support_agent"
-    | "viewer"
+import { ORG_ROLES, ROLE_LABELS, type OrgRole } from "./permissions"
 
-/** Ordered hierarchy — higher index = more permissions */
-const ROLE_HIERARCHY: OrgRole[] = [
-    "viewer",
-    "support_agent",
-    "sales_rep",
-    "manager",
-    "admin",
-    "owner",
-]
+export type { OrgRole }
+export { ROLE_LABELS }
+
+/** Ordered hierarchy — higher index = more permissions (mirrors permissions.ts) */
+const ROLE_HIERARCHY = ORG_ROLES
 
 function rankOf(role: OrgRole): number {
     return ROLE_HIERARCHY.indexOf(role)
@@ -35,13 +30,13 @@ export function hasRole(role: OrgRole, minimum: OrgRole): boolean {
 /** Can see all org-level data (not just own) */
 export function canViewAll(role: OrgRole) { return hasRole(role, "manager") }
 
-/** Can create/edit deals, contacts, companies */
-export function canWrite(role: OrgRole) { return hasRole(role, "sales_rep") }
+/** Can create/edit records — every member except `viewer` (matches memberProcedure) */
+export function canWrite(role: OrgRole) { return hasRole(role, "support_agent") }
 
-/** Can manage workflows, pipelines, members */
+/** Can delete records / manage workflows, pipelines, members */
 export function canManage(role: OrgRole) { return hasRole(role, "manager") }
 
-/** Can access billing, audit log, org settings */
+/** Can access billing, audit log, org settings, member management */
 export function canAdmin(role: OrgRole) { return hasRole(role, "admin") }
 
 /** Can see Analytics page */
@@ -55,7 +50,7 @@ export function canUseAI(role: OrgRole) { return hasRole(role, "sales_rep") }
 
 // ─── Nav visibility ──────────────────────────────────────────────────────────
 
-/** Which nav items are visible for a given role */
+/** Which nav hrefs are visible for a given role. */
 export function visibleNavItems(role: OrgRole): Set<string> {
     const items = new Set(["/dashboard", "/tasks"])
 
@@ -67,7 +62,7 @@ export function visibleNavItems(role: OrgRole): Set<string> {
     }
 
     // sales_rep+ sees deals and AI
-    if (canWrite(role)) {
+    if (canUseAI(role)) {
         items.add("/deals")
         items.add("/ai")
     }
@@ -82,15 +77,4 @@ export function visibleNavItems(role: OrgRole): Set<string> {
     items.add("/settings")
 
     return items
-}
-
-// ─── Role display helpers ────────────────────────────────────────────────────
-
-export const ROLE_LABELS: Record<OrgRole, string> = {
-    owner: "Owner",
-    admin: "Admin",
-    manager: "Manager",
-    sales_rep: "Sales Rep",
-    support_agent: "Support Agent",
-    viewer: "Viewer",
 }

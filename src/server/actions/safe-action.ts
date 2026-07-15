@@ -54,7 +54,16 @@ export const orgActionClient = authActionClient.use(async ({ next, ctx }) => {
     return next({ ctx: { ...ctx, orgId, member } });
 });
 
-// ── Manager-level client 
+// ── Writing-member client (any role except viewer)
+// Enforces the RBAC matrix rule "viewer cannot create/edit records".
+export const memberActionClient = orgActionClient.use(async ({ next, ctx }) => {
+    if (ctx.member.role === "viewer") {
+        throw new ActionError("Viewers have read-only access.");
+    }
+    return next({ ctx });
+});
+
+// ── Manager-level client
 export const managerActionClient = orgActionClient.use(async ({ next, ctx }) => {
     const allowedRoles = ["owner", "admin", "manager"];
     if (!allowedRoles.includes(ctx.member.role)) {

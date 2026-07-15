@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { createTRPCRouter, orgProcedure, managerProcedure } from "../trpc";
+import { createTRPCRouter, orgProcedure, memberProcedure, managerProcedure } from "../trpc";
 import {
     getCompaniesByOrg,
     getCompanyById,
@@ -46,13 +46,13 @@ export const companiesRouter = createTRPCRouter({
         return getCompanyCount(ctx.orgId);
     }),
 
-    create: orgProcedure
+    create: memberProcedure
         .input(createCompanySchema)
         .mutation(({ ctx, input }) => {
             return createCompany({ ...input, organizationId: ctx.orgId });
         }),
 
-    update: orgProcedure
+    update: memberProcedure
         .input(updateCompanySchema)
         .mutation(async ({ ctx, input }) => {
             const company = await updateCompany(input.id, ctx.orgId, input);

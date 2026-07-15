@@ -1,7 +1,7 @@
 "use server";
 
 import { z } from "zod";
-import { orgActionClient, managerActionClient, ActionError } from "./safe-action";
+import { memberActionClient, managerActionClient, ActionError } from "./safe-action";
 import {
     createDeal,
     updateDeal,
@@ -18,7 +18,7 @@ import { logAudit } from "@/server/audit";
 
 
 
-export const createDealAction = orgActionClient
+export const createDealAction = memberActionClient
     .inputSchema(createDealSchema)
     .action(async ({ parsedInput, ctx }) => {
         const deal = await createDeal({
@@ -65,7 +65,7 @@ export const createDealAction = orgActionClient
         return { deal };
     });
 
-export const updateDealAction = orgActionClient
+export const updateDealAction = memberActionClient
     .inputSchema(updateDealSchema)
     .action(async ({ parsedInput, ctx }) => {
         const { id, ...data } = parsedInput;
@@ -97,7 +97,7 @@ export const updateDealAction = orgActionClient
         return { deal };
     });
 
-export const changeDealStageAction = orgActionClient
+export const changeDealStageAction = memberActionClient
     .inputSchema(changeDealStageSchema)
     .action(async ({ parsedInput, ctx }) => {
         const existingDeal = await getDealById(parsedInput.id, ctx.orgId);

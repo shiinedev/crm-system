@@ -1,6 +1,6 @@
 "use server"
 
-import { orgActionClient, ActionError } from "./safe-action"
+import { memberActionClient, ActionError } from "./safe-action"
 import {
   createDocument,
   updateDocument,
@@ -11,7 +11,7 @@ import { createNoteSchema, deleteDocumentSchema, updateDocumentSchema } from "@/
 import { logAudit } from "@/server/audit"
 
 
-export const createNoteAction = orgActionClient
+export const createNoteAction = memberActionClient
   .inputSchema(createNoteSchema)
   .action(async ({ parsedInput, ctx }) => {
     const doc = await createDocument({
@@ -43,7 +43,7 @@ export const createNoteAction = orgActionClient
     return { doc }
   })
 
-export const updateDocumentAction = orgActionClient
+export const updateDocumentAction = memberActionClient
   .inputSchema(updateDocumentSchema)
   .action(async ({ parsedInput, ctx }) => {
     const { id, ...data } = parsedInput
@@ -60,7 +60,7 @@ export const updateDocumentAction = orgActionClient
     return { doc }
   })
 
-export const deleteDocumentAction = orgActionClient
+export const deleteDocumentAction = memberActionClient
   .inputSchema(deleteDocumentSchema)
   .action(async ({ parsedInput, ctx }) => {
     const doc = await softDeleteDocument(parsedInput.id, ctx.orgId)

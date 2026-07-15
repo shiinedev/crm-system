@@ -1,7 +1,7 @@
 "use server";
 
 import { z } from "zod";
-import { orgActionClient, ActionError } from "./safe-action";
+import { memberActionClient, ActionError } from "./safe-action";
 import {
     createTask,
     updateTask,
@@ -14,7 +14,7 @@ import { logAudit } from "@/server/audit";
 
 
 
-export const createTaskAction = orgActionClient
+export const createTaskAction = memberActionClient
     .inputSchema(createTaskSchema)
     .action(async ({ parsedInput, ctx }) => {
         const task = await createTask({
@@ -64,7 +64,7 @@ export const createTaskAction = orgActionClient
         return { task };
     });
 
-export const updateTaskAction = orgActionClient
+export const updateTaskAction = memberActionClient
     .inputSchema(updateTaskSchema)
     .action(async ({ parsedInput, ctx }) => {
         const { id, ...data } = parsedInput;
@@ -112,7 +112,7 @@ export const updateTaskAction = orgActionClient
         return { task };
     });
 
-export const deleteTaskAction = orgActionClient
+export const deleteTaskAction = memberActionClient
     .inputSchema(z.object({ id: z.string() }))
     .action(async ({ parsedInput, ctx }) => {
         const task = await softDeleteTask(parsedInput.id, ctx.orgId);

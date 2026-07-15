@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { createTRPCRouter, orgProcedure, managerProcedure } from "../trpc";
+import { createTRPCRouter, managerProcedure } from "../trpc";
 import {
     getRevenueByMonth,
     getPipelineHealthByStage,
@@ -8,7 +8,7 @@ import {
 } from "@/db/queries/analytics.queries";
 
 export const analyticsRouter = createTRPCRouter({
-    dashboardSummary: orgProcedure.query(({ ctx }) => {
+    dashboardSummary: managerProcedure.query(({ ctx }) => {
         return getDashboardSummary(ctx.orgId);
     }),
 
@@ -18,7 +18,7 @@ export const analyticsRouter = createTRPCRouter({
             return getRevenueByMonth(ctx.orgId, input.months);
         }),
 
-    pipelineHealth: orgProcedure
+    pipelineHealth: managerProcedure
         .input(z.object({ pipelineId: z.string() }))
         .query(({ ctx, input }) => {
             return getPipelineHealthByStage(input.pipelineId, ctx.orgId);

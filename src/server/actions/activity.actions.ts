@@ -1,13 +1,13 @@
 "use server";
 
 import { z } from "zod";
-import { orgActionClient } from "./safe-action";
+import { memberActionClient } from "./safe-action";
 import { createActivity, deleteActivity } from "@/db/queries/activities.queries";
 import { createNotification } from "@/db/queries/notifications.queries";
 import { createActivitySchema } from "@/lib/validations/activity";
 import { logAudit } from "@/server/audit";
 
-export const createActivityAction = orgActionClient
+export const createActivityAction = memberActionClient
     .inputSchema(createActivitySchema)
     .action(async ({ parsedInput, ctx }) => {
         const { mentionedUserIds, ...activityData } = parsedInput;
@@ -46,7 +46,7 @@ export const createActivityAction = orgActionClient
         return { activity };
     });
 
-export const deleteActivityAction = orgActionClient
+export const deleteActivityAction = memberActionClient
     .inputSchema(z.object({ id: z.string() }))
     .action(async ({ parsedInput, ctx }) => {
         await deleteActivity(parsedInput.id, ctx.orgId);

@@ -4,6 +4,7 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { organization } from "better-auth/plugins";
 import { db } from "@/db";
 import * as schema from "@/db/schema";
+import { ac, roles } from "@/lib/permissions";
 import { env } from "@/lib/env";
 import { redis } from "@/server/cache/redis";
 import { sendEmail } from "@/server/email/mailer";
@@ -78,7 +79,8 @@ export const auth = betterAuth({
         organization({
             allowUserToCreateOrganization: true,
             creatorRole: "owner",
-            memberRoles: ["owner", "admin", "manager", "sales_rep", "support_agent", "viewer"],
+            ac,
+            roles,
             sendInvitationEmail: async (data) => {
                 const url = `${env.BETTER_AUTH_URL}/accept-invitation/${data.id}`;
                 await sendEmail({

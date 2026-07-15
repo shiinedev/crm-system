@@ -1,7 +1,7 @@
 "use server";
 
 import { z } from "zod";
-import { orgActionClient, managerActionClient, ActionError } from "./safe-action";
+import { memberActionClient, managerActionClient, ActionError } from "./safe-action";
 import {
     createCompany,
     updateCompany,
@@ -13,7 +13,7 @@ import { logAudit } from "@/server/audit";
 
 
 
-export const createCompanyAction = orgActionClient
+export const createCompanyAction = memberActionClient
     .inputSchema(createCompanySchema)
     .action(async ({ parsedInput, ctx }) => {
         const company = await createCompany({
@@ -48,7 +48,7 @@ export const createCompanyAction = orgActionClient
         return { company };
     });
 
-export const updateCompanyAction = orgActionClient
+export const updateCompanyAction = memberActionClient
     .inputSchema(updateCompanySchema)
     .action(async ({ parsedInput, ctx }) => {
         const { id, ...data } = parsedInput;

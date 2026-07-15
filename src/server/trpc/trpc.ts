@@ -52,7 +52,19 @@ export const orgProcedure = protectedProcedure.use(({ ctx, next }) => {
     });
 });
 
-// ── Requires manager role or above 
+// ── Requires a writing member (any role except viewer)
+// Enforces the RBAC matrix rule "viewer cannot create/edit records".
+export const memberProcedure = orgProcedure.use(({ ctx, next }) => {
+    if (ctx.orgMember.role === "viewer") {
+        throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Viewers have read-only access",
+        });
+    }
+    return next({ ctx });
+});
+
+// ── Requires manager role or above
 export const managerProcedure = orgProcedure.use(({ ctx, next }) => {
     const allowedRoles = ["owner", "admin", "manager"];
     if (!allowedRoles.includes(ctx.orgMember.role)) {

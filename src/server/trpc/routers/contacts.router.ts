@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { createTRPCRouter, orgProcedure, managerProcedure } from "../trpc";
+import { createTRPCRouter, orgProcedure, memberProcedure, managerProcedure } from "../trpc";
 import {
     getContactsByOrg,
     getContactsByCompany,
@@ -53,13 +53,13 @@ export const contactsRouter = createTRPCRouter({
         return getContactCount(ctx.orgId);
     }),
 
-    create: orgProcedure
+    create: memberProcedure
         .input(createContactSchema)
         .mutation(({ ctx, input }) => {
             return createContact({ ...input, organizationId: ctx.orgId });
         }),
 
-    update: orgProcedure
+    update: memberProcedure
         .input(z.object({ id: z.string(), data: updateContactSchema }))
         .mutation(async ({ ctx, input }) => {
             const contact = await updateContact(input.id, ctx.orgId, input.data);
