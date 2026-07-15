@@ -7,6 +7,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { SidebarTrigger } from "@/components/ui/sidebar"
 import { NotificationsBell } from "@/modules/notifications/components/notification-bell"
 import { CommandPalette } from "@/modules/search/components/command-palette"
 import { useCommandPalette } from "@/hooks/use-command-palette"
@@ -45,7 +46,9 @@ export function Header() {
 
   return (
     <>
-      <header className="flex h-14 items-center justify-between border-b bg-background px-4 pl-14 md:pl-4">
+      <header className="flex h-14 items-center justify-between border-b bg-background px-4">
+        <div className="flex items-center gap-2">
+        <SidebarTrigger className="-ml-1" />
         {/* Org Switcher */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -76,6 +79,7 @@ export function Header() {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        </div>
 
         {/* Right side */}
         <div className="flex items-center gap-1">

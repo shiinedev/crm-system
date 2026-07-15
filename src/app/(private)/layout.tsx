@@ -1,19 +1,24 @@
+import { cookies } from "next/headers"
 import { getSession } from "@/utils/get-session"
-import { Sidebar } from "@/components/layout/sidebar"
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
+import { AppSidebar } from "@/components/layout/sidebar"
 import { Header } from "@/components/layout/header"
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   await getSession() // redirects to /login if no session
 
+  // Restore the sidebar's collapsed/expanded state from the cookie so it
+  // renders consistently on first paint (no flash, no "disappearing" sidebar).
+  const cookieStore = await cookies()
+  const defaultOpen = cookieStore.get("sidebar_state")?.value !== "false"
+
   return (
-     <div className="flex h-screen overflow-hidden bg-background">
-      <Sidebar />
-      <div className="flex flex-1 flex-col overflow-hidden min-w-0">
+    <SidebarProvider defaultOpen={defaultOpen} className="h-svh overflow-hidden">
+      <AppSidebar />
+      <SidebarInset className="min-w-0 overflow-hidden">
         <Header />
-        <main className="flex-1 overflow-y-auto">
-          {children}
-        </main>
-      </div>
-    </div>
+        <div className="flex-1 overflow-y-auto">{children}</div>
+      </SidebarInset>
+    </SidebarProvider>
   )
 }
