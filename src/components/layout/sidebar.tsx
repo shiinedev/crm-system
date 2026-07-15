@@ -4,13 +4,15 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
   Building2, Users, TrendingUp, CheckSquare, LayoutDashboard,
-  FileText, Zap, BarChart3, Settings, Bot,
+  FileText, Zap, BarChart3, Settings, Bot, ChevronRight,
 } from "lucide-react"
 import {
-  Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent,
+  Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
   SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton,
-  SidebarMenuItem, SidebarMenuSkeleton, SidebarRail,
+  SidebarMenuItem, SidebarMenuSkeleton, SidebarMenuSub, SidebarMenuSubButton,
+  SidebarMenuSubItem, SidebarRail,
 } from "@/components/ui/sidebar"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { OrgSwitcher, type SwitcherOrg } from "@/components/layout/org-switcher"
 import { useRole } from "@/hooks/use-role"
 
@@ -41,6 +43,13 @@ const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
       { href: "/ai", label: "AI Assistant", icon: Bot },
     ],
   },
+]
+
+const SETTINGS_SUB = [
+  { href: "/settings/organization", label: "Organization" },
+  { href: "/settings/members", label: "Members" },
+  { href: "/settings/pipelines", label: "Pipelines" },
+  { href: "/settings/profile", label: "Profile" },
 ]
 
 // Shown when the role query is done but returns no role (e.g. no active org yet)
@@ -122,24 +131,45 @@ export function AppSidebar({ organizations, activeOrganizationId }: AppSidebarPr
             )
           })
         )}
-      </SidebarContent>
 
-      <SidebarFooter>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              isActive={pathname.startsWith("/settings")}
-              tooltip="Settings"
-            >
-              <Link href="/settings">
-                <Settings />
-                <span>Settings</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
+        {/* Settings — collapsible sub-menu, available to every role */}
+        <SidebarGroup>
+          <SidebarGroupLabel>System</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <Collapsible
+                asChild
+                defaultOpen={pathname.startsWith("/settings")}
+                className="group/collapsible"
+              >
+                <SidebarMenuItem>
+                  <CollapsibleTrigger asChild>
+                    <SidebarMenuButton
+                      tooltip="Settings"
+                      isActive={pathname.startsWith("/settings")}
+                    >
+                      <Settings />
+                      <span>Settings</span>
+                      <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                    </SidebarMenuButton>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <SidebarMenuSub>
+                      {SETTINGS_SUB.map((sub) => (
+                        <SidebarMenuSubItem key={sub.href}>
+                          <SidebarMenuSubButton asChild isActive={isActive(pathname, sub.href)}>
+                            <Link href={sub.href}>{sub.label}</Link>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      ))}
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
+                </SidebarMenuItem>
+              </Collapsible>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
 
       <SidebarRail />
     </Sidebar>
