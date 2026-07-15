@@ -82,7 +82,7 @@ export function OrgSwitcher({ organizations, activeOrganizationId }: OrgSwitcher
               </DropdownMenuItem>
             ))}
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => router.push("/settings/organization")} className="gap-2">
+            <DropdownMenuItem onClick={() => router.push("/onboarding")} className="gap-2">
               <div className="flex size-5 items-center justify-center rounded border border-dashed">
                 <Plus className="size-3.5" />
               </div>

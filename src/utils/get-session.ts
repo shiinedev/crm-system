@@ -25,13 +25,14 @@ export async function getSession(redirectIfUnauthenticated = true) {
 
 /**
  * Like getSession but also asserts an active org.
- * Redirects to /settings/organization when no active org is set.
+ * Redirects to /onboarding when no active org is set (e.g. a freshly
+ * registered user who hasn't created an organization yet).
  */
 export async function getSessionWithOrg() {
     const session = await getSession()
 
     if (!session?.session?.activeOrganizationId) {
-        redirect("/settings/organization")
+        redirect("/onboarding")
     }
 
     return {
