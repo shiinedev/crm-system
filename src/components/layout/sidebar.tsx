@@ -11,6 +11,7 @@ import {
   SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton,
   SidebarMenuItem, SidebarMenuSkeleton, SidebarRail,
 } from "@/components/ui/sidebar"
+import { OrgSwitcher, type SwitcherOrg } from "@/components/layout/org-switcher"
 import { useRole } from "@/hooks/use-role"
 
 type NavItem = { href: string; label: string; icon: React.ElementType }
@@ -50,7 +51,12 @@ function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(href + "/")
 }
 
-export function AppSidebar() {
+interface AppSidebarProps {
+  organizations: SwitcherOrg[]
+  activeOrganizationId: string | null
+}
+
+export function AppSidebar({ organizations, activeOrganizationId }: AppSidebarProps) {
   const pathname = usePathname()
   const { visibleNavItems, isLoading, role } = useRole()
 
@@ -61,9 +67,9 @@ export function AppSidebar() {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild size="lg">
+            <SidebarMenuButton asChild>
               <Link href="/dashboard">
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+                <div className="flex aspect-square size-6 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground">
                   <TrendingUp />
                 </div>
                 <span className="font-semibold">CRM</span>
@@ -71,6 +77,7 @@ export function AppSidebar() {
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
+        <OrgSwitcher organizations={organizations} activeOrganizationId={activeOrganizationId} />
       </SidebarHeader>
 
       <SidebarContent>

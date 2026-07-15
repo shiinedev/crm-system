@@ -1,6 +1,6 @@
 "use client"
 
-import { ChevronsUpDown, LogOut, User, Plus, Check, Search } from "lucide-react"
+import { LogOut, User, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -11,75 +11,26 @@ import { SidebarTrigger } from "@/components/ui/sidebar"
 import { NotificationsBell } from "@/modules/notifications/components/notification-bell"
 import { CommandPalette } from "@/modules/search/components/command-palette"
 import { useCommandPalette } from "@/hooks/use-command-palette"
-import { useSession, signOut, organization } from "@/server/auth/auth-client"
+import { useSession, signOut } from "@/server/auth/auth-client"
 import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
 import { getInitials } from "@/utils/get-initials"
 
 export function Header() {
   const { data: session } = useSession()
   const router = useRouter()
   const { setOpen: openPalette } = useCommandPalette()
-  const [orgs, setOrgs] = useState<Array<{ id: string; name: string; slug: string | null }>>([])
-  const [manualOrg, setManualOrg] = useState<string | null>(null)
-  const activeOrg = manualOrg ?? session?.session?.activeOrganizationId ?? null
-
-  useEffect(() => {
-    organization.list().then((res) => {
-      if (res.data) setOrgs(res.data)
-    })
-  }, [session])
-
-  async function handleSwitchOrg(orgId: string) {
-    await organization.setActive({ organizationId: orgId })
-    setManualOrg(orgId)
-    router.refresh()
-  }
+  const user = session?.user
 
   async function handleSignOut() {
     await signOut()
     router.push("/login")
   }
 
-  const currentOrg = orgs.find((o) => o.id === activeOrg)
-  const user = session?.user
-
   return (
     <>
       <header className="flex h-14 items-center justify-between border-b bg-background px-4">
-        <div className="flex items-center gap-2">
+        {/* Sidebar toggle (org switcher now lives in the sidebar header) */}
         <SidebarTrigger className="-ml-1" />
-        {/* Org Switcher */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="gap-2 font-medium">
-              <div className="flex h-5 w-5 items-center justify-center rounded bg-primary text-[10px] font-bold text-primary-foreground">
-                {currentOrg?.name?.[0]?.toUpperCase() ?? "?"}
-              </div>
-              <span className="max-w-[120px] truncate">{currentOrg?.name ?? "Select org"}</span>
-              <ChevronsUpDown className="h-3.5 w-3.5 text-muted-foreground" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-56">
-            <DropdownMenuLabel>Organizations</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            {orgs.map((org) => (
-              <DropdownMenuItem key={org.id} onClick={() => handleSwitchOrg(org.id)}>
-                <div className="flex h-5 w-5 items-center justify-center rounded bg-muted text-[10px] font-bold">
-                  {org.name[0].toUpperCase()}
-                </div>
-                <span className="truncate">{org.name}</span>
-                {org.id === activeOrg && <Check className="ml-auto h-3.5 w-3.5" />}
-              </DropdownMenuItem>
-            ))}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => router.push("/settings/organization")}>
-              <Plus className="h-4 w-4" />
-              Create organization
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-        </div>
 
         {/* Right side */}
         <div className="flex items-center gap-1">

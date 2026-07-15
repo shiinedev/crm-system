@@ -2,6 +2,7 @@ import "server-only";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { organization } from "better-auth/plugins";
+import { and, asc, desc, eq, isNotNull } from "drizzle-orm";
 import { db } from "@/db";
 import * as schema from "@/db/schema";
 import { ac, roles, ROLE_LABELS, type OrgRole } from "@/lib/permissions";
@@ -29,6 +30,49 @@ const secondaryStorage = redisClient
           },
       }
     : undefined;
+
+/**
+ * Resolve which organization a new session should default to, so users never
+ * land on "no active organization" after logging in. Prefers the org from their
+ * most recent prior session (remembers their last choice across logins) as long
+ * as they're still a member; otherwise falls back to their first organization.
+ */
+async function resolveDefaultOrganization(userId: string): Promise<string | null> {
+    const [prior] = await db
+        .select({ orgId: schema.sessions.activeOrganizationId })
+        .from(schema.sessions)
+        .where(
+            and(
+                eq(schema.sessions.userId, userId),
+                isNotNull(schema.sessions.activeOrganizationId),
+            ),
+        )
+        .orderBy(desc(schema.sessions.updatedAt))
+        .limit(1);
+
+    if (prior?.orgId) {
+        const [stillMember] = await db
+            .select({ id: schema.members.id })
+            .from(schema.members)
+            .where(
+                and(
+                    eq(schema.members.userId, userId),
+                    eq(schema.members.organizationId, prior.orgId),
+                ),
+            )
+            .limit(1);
+        if (stillMember) return prior.orgId;
+    }
+
+    const [first] = await db
+        .select({ orgId: schema.members.organizationId })
+        .from(schema.members)
+        .where(eq(schema.members.userId, userId))
+        .orderBy(asc(schema.members.createdAt))
+        .limit(1);
+
+    return first?.orgId ?? null;
+}
 
 export const auth = betterAuth({
     database: drizzleAdapter(db, {
@@ -108,6 +152,20 @@ export const auth = betterAuth({
         cookieCache: {
             enabled: true,
             maxAge: 60 * 5, // 5 minutes
+        },
+    },
+    databaseHooks: {
+        session: {
+            create: {
+                // Auto-select an organization when a session is created (login),
+                // so the active org is set from the first request and persists.
+                before: async (session) => {
+                    const activeOrganizationId = await resolveDefaultOrganization(
+                        session.userId,
+                    );
+                    return { data: { ...session, activeOrganizationId } };
+                },
+            },
         },
     },
 });
