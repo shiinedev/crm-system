@@ -12,7 +12,9 @@ export async function createTRPCContext() {
 
     let orgMember = null;
     if (session?.user?.id && orgId) {
-        const member = await auth.api.getActiveMember();
+        // Must pass headers — getActiveMember is session-scoped. Without them it
+        // returns null, which left ctx.role null (blanked the role-based sidebar).
+        const member = await auth.api.getActiveMember({ headers: headersList });
         orgMember = member ?? null;
     }
 
